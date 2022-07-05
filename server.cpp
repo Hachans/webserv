@@ -14,24 +14,35 @@ Server::Server(int port) : _port(port), _err(false){
 
 void	Server::setup_err(int err, const char *msg){
 	if(err < 0)
-		close(_serv_fd); throw(msg);
+		close(_serv_fd), throw(msg);
 }
 
 void	Server::setup_serv(){
 	int ret;
 	int opt = 1;
 	try{
-		_serv_fd = socket(AF_UNSPEC, SOCK_STREAM, 0);
+		struct addrinfo *ai, *p;
+		std::stringstream ss;
+
+		memset(&_address, 0, sizeof(_address));
+		_address.ai_family = AF_UNSPEC;
+		_address.ai_socktype = SOCK_STREAM;
+		_address.ai_flags = AI_PASSIVE;
+		ss << _port;
+		int n = getaddrinfo(NULL, ss.str().c_str(), &_address, &ai);
+
+		if (n != 0)
+			throw "getaddrinfo fucked up";
+
+		p = ai;
+		_serv_fd = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
 		setup_err(_serv_fd, "error creating socket");
-		ret = setsockopt(_serv_fd, SOL_SOCKET, SO_REUSEADDR, (char*)&opt, sizeof(opt));
+		std::cout << "Sock fd is: " << _serv_fd << std::endl;
+		ret = setsockopt(_serv_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 		setup_err(ret, "error set socket");
 		ret = fcntl(_serv_fd, F_SETFL, O_NONBLOCK);
 		setup_err(ret, "error fcntl");
-		_address.sin_family = AF_INET;// IPv4 protocol
-		memset(&_address.sin_zero, 0, sizeof (_address.sin_zero));
-		_address.sin_addr.s_addr = INADDR_ANY;
-		_address.sin_port = htons(_port);
-		ret = bind(_serv_fd, (struct sockaddr *)&_address, sizeof(_address));// Forcefully attaching socket to the port
+		ret = bind(_serv_fd, p->ai_addr, p->ai_addrlen);// Forcefully attaching socket to the port
 		setup_err(ret, "error binding");
 		_listen_fd = listen(_serv_fd, SIZE_POLLFD);
 		setup_err(_listen_fd, "Error function  the listening");
@@ -55,7 +66,7 @@ void	Server::run_serv(){
 					continue;
 				// handle_event(i);
 			}
-			// squeeze_poll();/
+			// squeeze_poll();
 		}
 	}
 	catch (const char *msg){

@@ -32,7 +32,7 @@ class Server{
 	bool				_remove_client;
 	bool				_err;
 	std::vector<int>	_clients;
-	struct sockaddr_in	_address;
+	struct addrinfo		_address;
 	struct pollfd		_poll_fds[SIZE_POLLFD];
 	size_t				_nfds;
 
