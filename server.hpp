@@ -8,14 +8,47 @@
 #include <netdb.h> // For addrinfo
 #include <arpa/inet.h> // For inet_ntop
 #include <stdio.h> // For fclose()
+#include <poll.h>
 #include <cstdlib> // For exit() and EXIT_FAILURE
 #include <iostream> // For cout
 #include <sstream> // For stringstream
 #include <map>
+#include <vector>
 #include <fstream>
 
+#define ERROR		-1
+#define SQUEEZE		-1
+#define SUCCESS		0
+#define PORT		4242
+#define SIZE_POLLFD	30000
+#define BUFFER_SIZE	8192
 
-#define PORT "4242"
+class Server{
+	int					_serv_fd;
+	int					_listen_fd;
+	char				_buffer[BUFFER_SIZE + 1];
+	int					_port;
+	bool				_end_connect;
+	bool				_remove_client;
+	bool				_err;
+	std::vector<int>	_clients;
+	struct sockaddr_in	_address;
+	struct pollfd		_poll_fds[SIZE_POLLFD];
+	size_t				_nfds;
+
+	public:
+
+		Server();
+		~Server();
+		Server(int port);
+		void	setup_serv();
+		void	run_serv();
+
+		void	setup_err(int err, const char *msg);
+		void	handle_event();
+		void	squeeze_poll();
+
+};
 
 /* utils.cpp */
 void *get_in_addr(struct sockaddr *sa);
@@ -28,13 +61,9 @@ std::map<std::string, std::string> http_table(void);
 /* error_page.cpp */
 std::string generate_html(const std::string &key);
 std::string delete_response( void );
+std::string post_page( void );
 
 /* handlers.cpp */
-std::string valid_get(std::fstream &test, std::map<std::string, std::string> &map, std::string type);
-std::string invalid_get(const std::string &err_cd, std::map<std::string, std::string> &map);
-std::string valid_delete(std::string file_name, std::string type, std::map<std::string, std::string> &map);
-std::string invalid_delete(const std::string &err_cd, std::map<std::string, std::string> &map);
-std::string valid_post(std::string file_name, std::string type, std::map<std::string, std::string> &map);
-std::string invalid_post(std::string err_cd, std::map<std::string, std::string> &map);
+
 
 #endif

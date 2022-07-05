@@ -1,220 +1,72 @@
 #include "server.hpp"
 
-int main(void)
-{
-	fd_set master;
-	fd_set read_fds;
+Server::Server() : _port(PORT), _err(false){
 
-	int fdmax;
-	int listener;
-	int newfd;
-
-	struct sockaddr_storage remoteaddr;
-	socklen_t addrlen;
-
-	char buff[8024];
-	int nBytes;
-
-	char http_header[] = "HTTP/1.1 ";
-
-	int yes = 1;
-	int i, rv;
-
-	struct addrinfo hints, *ai, *p;
-
-	FD_ZERO(&master);
-	FD_ZERO(&read_fds);
-
-	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = AF_UNSPEC;
-	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_flags = AI_PASSIVE;
-	rv = getaddrinfo(NULL, PORT, &hints, &ai);
-
-	if (rv != 0){
-		perror("getaddrinfo");
-		exit(1);
-	}
-
-	for (p = ai; p != NULL; p = p->ai_next){
-		listener = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
-		fcntl(listener, F_SETFL, O_NONBLOCK);
-		if (listener < 0)
-			continue ;
-		
-		setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int));
-
-		if (bind(listener, p->ai_addr, p->ai_addrlen) < 0){
-			close(listener);
-			continue ;
-		}
-		break ;
-	}
-
-	if (p == NULL){
-		std::cerr << "webserv: failed to bind" << std::endl;
-		exit(2);
-	}
-
-	if (listen(listener, 10) == -1){
-		perror("listen");
-		exit(3);
-	}
-
-	FD_SET(listener, &master);
-	fdmax = listener;
-
-	while (true){
-		read_fds = master;
-		if (select(fdmax + 1, &read_fds, NULL, NULL, NULL) == -1){
-			perror("select");
-			exit(4);
-		}
-
-		for (i = 0; i <= fdmax; i++){
-			if (FD_ISSET(i , &read_fds)){
-				if (i == listener){
-
-					addrlen = sizeof(remoteaddr);
-					newfd = accept(listener, reinterpret_cast<struct sockaddr *>(&remoteaddr), &addrlen);
-					if (newfd == -1)
-						perror("accept");
-					else{
-						FD_SET(newfd, &master);
-						if (newfd > fdmax)
-							fdmax = newfd;
-						std::cout << "webserv: new connection" << std::endl;
-					}
-				}
-				else{
-
-					nBytes = recv(i, buff, sizeof(buff) - 1, 0);
-					buff[nBytes] = 0;
-					if (nBytes <= 0){
-
-						if (nBytes == 0)
-							std::cout << "webserv: socket " << i << " hung up" << std::endl;
-						else
-							perror("recv");
-						close(i);
-						FD_CLR(i, &master);
-					}
-					else{
-						std::map<std::string, std::string> types = initialize_mime_types();
-						std::map<std::string, std::string> http_code = http_table();
-						std::string response = http_header;
-						char *parse_string_method = parse_method(buff, " ");
-						char *parse_string = parse(buff, " ");
-						if(!parse_string){
-							response += invalid_get("400", http_code);
-							send(i, response.c_str(), response.length(), 0);
-							delete[] parse_string_method;
-							delete[] parse_string;
-							continue ;
-						}
-						else if (!strcmp(parse_string_method, "TEAPOT"))
-						{
-							delete[] parse_string_method;
-							parse_string_method = strdup("GET");
-							delete[] parse_string;
-							parse_string = strdup("/teapot.html");
-						}
-						char *http_version = parse_version(buff, " ");
-						if(strlen(http_version) != 8 && strncmp(http_version, "HTTP/1.1", 8)){
-							response += invalid_get("505", http_code);
-							send(i, response.c_str(), response.length(), 0);
-							delete[] parse_string_method;
-							delete[] parse_string;
-							delete[] http_version;
-							continue ;
-						}
-						char *copy = strdup(parse_string);
-						if (!strcmp(copy, "/") && !strcmp(parse_string_method, "GET")){
-							delete[] copy;
-							delete[] parse_string;
-							copy = strdup("/index.html");
-							parse_string = strdup("/index.html");
-						}
-						char *parse_ext = parse(copy, ".");
-						if(!parse_ext){
-							response += invalid_get("415", http_code);
-							send(i, response.c_str(), response.length(), 0);
-							delete[] copy;
-							delete[] parse_string_method;
-							delete[] parse_string;
-							delete[] parse_ext;
-							continue ;
-						}
-
-						if (!strcmp(parse_string_method, "GET")){
-							std::map<std::string, std::string>::iterator it = types.find("." + std::string(parse_ext));
-							if (it != types.end()){
-
-								std::string str = parse_string + 1;
-								std::fstream test(str);
-
-								if(test)
-									response += valid_get(test, http_code, it->second);
-								else
-									response += invalid_get("404", http_code);
-								send(i, response.c_str(), response.length(), 0);
-							}
-							else{
-								response += invalid_get("415", http_code);
-								send(i, response.c_str(), response.length(), 0);
-							}
-						}
-						else if (!strcmp(parse_string_method, "POST")){
-							std::map<std::string, std::string>::iterator it = types.find("." + std::string(parse_ext));
-							if (it != types.end() && strcmp(parse_string, "/")){
-
-								std::string str = parse_string + 1;
-								std::FILE *file = fopen(str.c_str(), "r");
-								if(!file)
-									response += valid_post(str, it->second, http_code);
-								else{
-									fclose(file);
-									response += invalid_post("422", http_code);
-								}
-								send(i, response.c_str(), response.length(), 0);
-							}
-							else{
-								response += invalid_post("415", http_code);
-								send(i, response.c_str(), response.length(), 0);
-							}
-						}
-						else if (!strcmp(parse_string_method, "DELETE")){
-							std::map<std::string, std::string>::iterator it = types.find("." + std::string(parse_ext));
-							if (it != types.end()){
-
-								std::string str = parse_string + 1;
-								if(std::FILE *file = fopen(str.c_str(), "r")){
-									fclose(file);
-									response += valid_delete(str, it->second, http_code);
-								}
-								else
-									response += invalid_delete("204", http_code);
-								send(i, response.c_str(), response.length(), 0);
-							}
-							else{
-								response += invalid_delete("415", http_code);
-								send(i, response.c_str(), response.length(), 0);
-							}
-						}
-						else
-						{
-							response += "405 ";
-							response += http_code["405"];
-							send(i, response.c_str(), response.length(), 0);
-						}
-						delete[] copy;
-						delete[] parse_string_method;
-						delete[] parse_string;
-						delete[] parse_ext;
-					}
-				}
-			}
-		}
-	}
-	return (0);
 }
+
+Server::~Server(){
+
+}
+
+Server::Server(int port) : _port(port), _err(false){
+
+}
+
+void	Server::setup_err(int err, const char *msg){
+	if(err < 0)
+		close(_serv_fd); throw(msg);
+}
+
+void	Server::setup_serv(){
+	int ret;
+	int opt = 1;
+	try{
+		_serv_fd = socket(AF_UNSPEC, SOCK_STREAM, 0);
+		setup_err(_serv_fd, "error creating socket");
+		ret = setsockopt(_serv_fd, SOL_SOCKET, SO_REUSEADDR, (char*)&opt, sizeof(opt));
+		setup_err(ret, "error set socket");
+		ret = fcntl(_serv_fd, F_SETFL, O_NONBLOCK);
+		setup_err(ret, "error fcntl");
+		_address.sin_family = AF_INET;// IPv4 protocol
+		memset(&_address.sin_zero, 0, sizeof (_address.sin_zero));
+		_address.sin_addr.s_addr = INADDR_ANY;
+		_address.sin_port = htons(_port);
+		ret = bind(_serv_fd, (struct sockaddr *)&_address, sizeof(_address));// Forcefully attaching socket to the port
+		setup_err(ret, "error binding");
+		_listen_fd = listen(_serv_fd, SIZE_POLLFD);
+		setup_err(_listen_fd, "Error function  the listening");
+	}
+	catch(const char *msg){
+		std::cout << msg << std::endl;
+		_err = true;
+	}
+}
+
+void	Server::run_serv(){
+	int ret;
+	try{
+		while(true){
+			ret = poll(_poll_fds, _nfds, -1);
+			setup_err(ret, "error poll");
+			if(ret == 0)
+				throw("poll() time out");
+			for(size_t i = 0; i < _nfds ; i++){
+				if(_poll_fds[i].revents == 0)
+					continue;
+				// handle_event(i);
+			}
+			// squeeze_poll();/
+		}
+	}
+	catch (const char *msg){
+		std::cout << msg << std::endl;
+	}
+}
+
+// void Server::handle_event(){
+
+// }
+
+// void Server::squeeze_poll(){
+
+// }

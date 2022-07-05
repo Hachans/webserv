@@ -14,10 +14,18 @@ std::string generate_html(const std::string &key)
 	return (ss.str());
 }
 
-std::string delete_response( void ){
+std::string delete_page( void ){
 
 	std::stringstream ss;
 	ss << "<html>\r\n<body>\r\n<h1>File deleted.</h1>\r\n</body>\r\n</html>\r\n";
+	std::cout << ss.str() << std::endl;
+	return (ss.str());
+}
+
+std::string post_page( void ){
+
+	std::stringstream ss;
+	ss << "<html>\r\n<body>\r\n<h1>File posted.</h1>\r\n</body>\r\n</html>\r\n";
 	std::cout << ss.str() << std::endl;
 	return (ss.str());
 }

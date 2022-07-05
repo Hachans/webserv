@@ -5,6 +5,7 @@ std::map<std::string, std::string> initialize_mime_types(void)
 	std::map<std::string, std::string> mime_types;
 
 	mime_types[".aac"]      = "audio/aac\r\n";
+	mime_types[".mp4"]      = "video/mp4\r\n";
 	mime_types[".abw"]      = "application/x-abiword\r\n";
 	mime_types[".arc"]      = "application/octet-stream\r\n";
 	mime_types[".avi"]      = "video/x-msvideo\r\n";
