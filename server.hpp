@@ -16,9 +16,6 @@
 #include <vector>
 #include <fstream>
 
-#define ERROR		-1
-#define SQUEEZE		-1
-#define SUCCESS		0
 #define PORT		4242
 #define SIZE_POLLFD	30000
 #define BUFFER_SIZE	8192
@@ -28,13 +25,14 @@ class Server{
 	int					_listen_fd;
 	char				_buffer[BUFFER_SIZE + 1];
 	int					_port;
-	bool				_end_connect;
+	bool				_end_connection;
 	bool				_remove_client;
+	bool				_remove_poll;
 	bool				_err;
 	std::vector<int>	_clients;
 	struct sockaddr_in	_address;
 	struct pollfd		_poll_fds[SIZE_POLLFD];
-	size_t				_nfds;
+	nfds_t				_nfds;
 
 	public:
 
@@ -45,8 +43,17 @@ class Server{
 		void	run_serv();
 
 		void	setup_err(int err, const char *msg);
-		void	handle_event();
+		void	handle_event(size_t ind);
 		void	squeeze_poll();
+
+		std::vector<int>& get_clients(){ return(_clients); }
+		int get_server_fd(){ return(_serv_fd); }
+
+		void accept_connections();
+		void addToPollFds(std::vector<int>& vect_client, size_t old_size);
+		bool handle_existing_connection(struct pollfd *poll);
+
+		int recieve_data(struct pollfd	*ptr_tab_poll);
 
 };
 

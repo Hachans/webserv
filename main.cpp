@@ -7,7 +7,6 @@ int main(int argc, char *argv[])
 	else{
 		Server sv(atoi(argv[1]));
 		sv.setup_serv();
-		// std::cout << "GEts here\n";
 	}
 	return (0);
 }
