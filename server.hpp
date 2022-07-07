@@ -15,6 +15,7 @@
 #include <map>
 #include <vector>
 #include <fstream>
+#include <ctime>
 
 #define PORT		4242
 #define SIZE_POLLFD	30000
@@ -34,6 +35,10 @@ class Server{
 	struct pollfd						_poll_fds[SIZE_POLLFD];
 	nfds_t								_nfds;
 	std::map<std::string, std::string>	_http_request;
+	std::map<std::string, std::string>	_response;
+	std::map<std::string, std::string>	_http_table;
+	std::map<std::string, std::string>	_mime_types;
+	size_t								_file_size;
 
 	public:
 
@@ -59,6 +64,8 @@ class Server{
 		int		get_server_fd(){ return(_serv_fd); }
 
 		std::vector<int>& get_clients(){ return(_clients); }
+
+		void	create_get_response();
 
 };
 
