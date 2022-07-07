@@ -161,9 +161,15 @@ void	Server::parse_first_line(std::string line){
 	_http_request["Path"] = line.substr(lpos, (pos - lpos));
 	pos++;
 	lpos = pos;
+	if (_http_request["Path"] == "/")
+		_http_request["Path"] = "/index.html";
+	_http_request["Path"].erase(0, 1);
 
 	pos = line.find('\n', lpos);
-	_http_request["Version"] = line.substr(lpos, (pos - lpos));
+	_http_request["Version"] = line.substr(lpos, (pos - lpos) - 1);
+
+	pos = _http_request["Path"].find('.');
+	_http_request["Content-Type"] = _http_request["Path"].substr(pos, _http_request["Path"].length() - 1);
 }
 
 void Server::parse_header(char* buff){

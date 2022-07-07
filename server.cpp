@@ -41,6 +41,8 @@ void	Server::setup_serv(){
 		std::cout << msg << std::endl;
 		_err = true;
 	}
+	_http_table = http_table();
+	_mime_types = initialize_mime_types();
 	_poll_fds[_nfds].fd = get_server_fd();
 	_poll_fds[_nfds].events = POLLIN;
 	_nfds++;
@@ -143,7 +145,10 @@ bool	Server::handle_existing_connection(struct pollfd *poll){
 	else if((ret = recieve_data(poll)) > 0){
 		parse_first_line(std::string(_buffer));
 		parse_header(_buffer);
+		
+		create_get_response();
 		check_values();
+		
 	}
 	if(_end_connection){
 		close(poll->fd);
@@ -190,4 +195,48 @@ int Server::recieve_data(struct pollfd	*poll){
 	poll->events = POLLOUT;
 	return ret;
 
+}
+
+void Server::create_get_response()
+{
+	std::fstream file(_http_request["Path"]);
+	std::stringstream ss;
+	std::stringstream ss2;
+
+	char buf[1000];
+	time_t now = time(0);
+	struct tm tm = *gmtime(&now);
+	strftime(buf, sizeof buf, "%a, %d %b %Y %H:%M:%S %Z", &tm);
+	_response["Date"] = "Date: ";
+	_response["Date"] += buf;
+	_response["Date"] += "\r\n";
+	if (!file)
+	{
+		_response["Header"] = _http_request["Version"];
+		_response["Header"] += " 404 ";
+		_response["Header"] += _http_table["404"];
+		_response["Server"] += "Server: Webserv\r\n";
+		_response["Body"] = generate_html("404");
+		_response["Content-Length"] = "Content-Length: ";
+		ss2 << _response["Body"].length();
+		_response["Content-Length"] += ss2.str();
+		_response["Content-Length"] += "\r\n";
+		_response["Content-Type"] = "Content-Type: ";
+		_response["Content-Type"] += _mime_types[".html"];
+	}
+	else
+	{
+		ss << file.rdbuf();
+		_response["Header"] = _http_request["Version"];
+		_response["Header"] += " 200 ";
+		_response["Header"] += _http_table["200"];
+		_response["Server"] += "Server: Webserv\r\n";
+		_response["Body"] = ss.str();
+		_response["Content-Length"] = "Content-Length: ";
+		ss2 << _response["Body"].length();
+		_response["Content-Length"] += ss2.str();
+		_response["Content-Length"] += "\r\n";
+		_response["Content-Type"] = "Content-Type: ";
+		_response["Content-Type"] += _mime_types[_http_request["Content-Type"]];
+	}
 }
