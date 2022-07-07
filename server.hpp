@@ -39,7 +39,8 @@ class Server{
 	std::map<std::string, std::string>	_response;
 	std::map<std::string, std::string>	_http_table;
 	std::map<std::string, std::string>	_mime_types;
-	size_t								_file_size;
+	int									_file_size;
+	int									_file_offset;
 
 	public:
 
@@ -57,6 +58,7 @@ class Server{
 		void	handle_event(size_t ind);
 		void	parse_first_line(std::string line);
 		void	parse_header(char* line);
+		void	squeeze_client_vect(int to_find);
 
 		void	addToPollFds(std::vector<int>& vect_client, size_t old_size);
 		bool	handle_existing_connection(struct pollfd *poll);

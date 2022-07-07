@@ -21,6 +21,7 @@ void	Server::setup_serv(){
 	int ret;
 	int opt = 1;
 	_nfds = 0;
+	_file_offset = 0;
 	try{
 		_serv_fd = socket(AF_INET, SOCK_STREAM, 0);
 		setup_err(_serv_fd, "error creating socket");
@@ -71,22 +72,6 @@ void	Server::run_serv(){
 	}
 }
 
-void	Server::squeeze_poll()
-{
-	if (_remove_poll){
-		_remove_poll = false;
-		for (size_t i = 0; i < _nfds; i++){
-			if (_poll_fds[i].fd == -1){
-				for(size_t j = i; j < _nfds - 1; j++){
-					_poll_fds[j].fd = _poll_fds[j+1].fd;
-				}
-				i--;
-				_nfds--;
-			}
-		}
-	}
-}
-
 void	Server::handle_event(size_t ind){
 	size_t old_size;
 	std::vector<int> &vect_client = this->get_clients();
@@ -120,15 +105,6 @@ void Server::accept_connections(){
 	}
 }
 
-void Server::addToPollFds(std::vector<int>& vect_client, size_t old_size){
-	for(size_t i = old_size; i < vect_client.size(); i++){
-		_poll_fds[_nfds].fd = vect_client[i];
-		_poll_fds[_nfds].events = POLLIN;
-		_poll_fds[_nfds].revents = 0;
-		_nfds++;
-	}
-}
-
 bool	Server::handle_existing_connection(struct pollfd *poll){
 	int ret;
 	_end_connection = false;
@@ -145,14 +121,14 @@ bool	Server::handle_existing_connection(struct pollfd *poll){
 	else if((ret = recieve_data(poll)) > 0){
 		parse_first_line(std::string(_buffer));
 		parse_header(_buffer);
-		
 		create_get_response();
-		check_values();
+		std::cout << "File size: " << _file_size << std::endl;
+		poll->events = POLLOUT;
 		
 	}
 	if(_end_connection){
 		close(poll->fd);
-		// squeeze_client_vect(poll->fd);
+		squeeze_client_vect(poll->fd);
 		poll->fd = -1;
 		_remove_client = true;
 	}
@@ -160,18 +136,24 @@ bool	Server::handle_existing_connection(struct pollfd *poll){
 }
 
 int	Server::send_response(struct pollfd *poll){
-	std::string page = basic_page();
-	std::string resp = "HTTP/1.1 200 OK\r\nContent-type: text/html\r\nContent-length: ";
-	resp += page.length();
-	resp += "\r\n\r\n";
-	resp += page;
-	resp += "\r\n";
-
-	int ret = send(poll->fd, resp.c_str(), resp.length(), 0);
+	static bool status = true;
+	static std::string resp = _response["Header"] + _response["Date"] + _response["Server"] + _response["Content-Type"] + _response["Content-Length"] + _response["Connection"] + "\r\n" + _response["Body"];
+	if(status == false)
+		resp = _response["Header"] + _response["Date"] + _response["Server"] + _response["Content-Type"] + _response["Content-Length"] + _response["Connection"] + "\r\n" + _response["Body"];
+	int rsize = resp.length();
+	int ret = send(poll->fd, resp.c_str(), (BUFFER_SIZE < rsize ? BUFFER_SIZE : rsize), 0);
 	if(ret < 0)
 		return ret;
-	std::cout << "successfully sent " << ret << " bytes\n";
-	poll->events = POLLIN;
+
+	std::cout << "successfully sent " << ret << " bytes remaining: " << rsize << std::endl;
+
+	resp.erase(0, ret);
+	status = true;
+	
+	if(rsize <= 0){
+		status = false;
+		poll->events = POLLIN;
+	}
 	return ret;
 }
 
@@ -192,7 +174,6 @@ int Server::recieve_data(struct pollfd	*poll){
 	std::cout << _buffer;
 	std::cout << "======================================================\n" << std::endl;
 
-	poll->events = POLLOUT;
 	return ret;
 
 }
@@ -233,10 +214,12 @@ void Server::create_get_response()
 		_response["Server"] += "Server: Webserv\r\n";
 		_response["Body"] = ss.str();
 		_response["Content-Length"] = "Content-Length: ";
+		_file_size = _response["Body"].length();
 		ss2 << _response["Body"].length();
 		_response["Content-Length"] += ss2.str();
 		_response["Content-Length"] += "\r\n";
 		_response["Content-Type"] = "Content-Type: ";
 		_response["Content-Type"] += _mime_types[_http_request["Content-Type"]];
 	}
+	_response["Connection"] = "Connection: closed\r\n";
 }
