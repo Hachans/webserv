@@ -149,46 +149,27 @@ void *get_in_addr(struct sockaddr *sa)
 	return (&(reinterpret_cast<struct sockaddr_in6 *>(sa)->sin6_addr));
 }
 
-char* parse(char line[], const char symbol[])
-{
-	char *copy = strdup(line);
-	char* message = NULL;
-	char* token = strtok(copy, symbol);
-	token = strtok(NULL, " ");
-	if (token == NULL)
-	{
-		delete[] copy;
-		return (message);
-	}
-	message = strdup(token);
-	delete[] copy;
-	return message;
+void	Server::parse_first_line(std::string line){
+	size_t pos, lpos;
+
+	pos = line.find(' ');
+	_http_request["Type"] = line.substr(0, pos);
+	pos++;
+	lpos = pos;
+
+	pos = line.find(' ', lpos);
+	_http_request["Path"] = line.substr(lpos, (pos - lpos));
+	pos++;
+	lpos = pos;
+
+	pos = line.find('\n', lpos);
+	_http_request["Version"] = line.substr(lpos, (pos - lpos));
 }
 
-char* parse_method(char line[], const char symbol[])
-{
-	char *copy = strdup(line);
-	char *message = NULL;
-	char * token = strtok(copy, symbol);
-	
-	message = strdup(token);
-	delete[] copy;
-	return message;
-}
+void Server::parse_header(std::string line);
 
-char* parse_version(char line[], const char symbol[])
-{
-	char *copy = strdup(line);
-	char* message = NULL;
-	char* token = strtok(copy, symbol);
-	token = strtok(NULL, " ");
-	token = strtok(NULL, " ");
-	if (token == NULL)
-	{
-		delete[] copy;
-		return (message);
-	}
-	message = strdup(token);
-	delete[] copy;
-	return message;
+void	Server::check_values(){
+	std::cout << _http_request["Type"] << std::endl;
+	std::cout << _http_request["Path"] << std::endl;
+	std::cout << _http_request["Version"] << std::endl;
 }

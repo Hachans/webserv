@@ -94,7 +94,7 @@ void	Server::handle_event(size_t ind){
 		addToPollFds(vect_client, old_size);
 	}
 	else if((std::find(vect_client.begin(), vect_client.end(), _poll_fds[ind].fd)) != vect_client.end()){
-		_end_connection = handle_existing_connection(&_poll_fds[ind]);
+		_end_connection = this->handle_existing_connection(&_poll_fds[ind]);
 		if(_end_connection)
 			_remove_poll = true;
 	}
@@ -132,17 +132,18 @@ bool	Server::handle_existing_connection(struct pollfd *poll){
 	_end_connection = false;
 
 	if(poll->revents & POLLOUT){
-		
-		// ret = send_response(poll);
-		// if(ret < 0)
-		// 	perror("send");
-		// else if(ret == 0){
-		// 	close(poll->fd)
-		// 	_end_connection = true;
-		// }
+		ret = send_response(poll);
+		if(ret < 0)
+			perror("send");
+		else if(ret == 0){
+			close(poll->fd);
+			_end_connection = true;
+		}
 	}
 	else if((ret = recieve_data(poll)) > 0){
-		//process request
+		parse_first_line(std::string(_buffer));
+		
+		check_values();
 	}
 	if(_end_connection){
 		close(poll->fd);
@@ -151,6 +152,22 @@ bool	Server::handle_existing_connection(struct pollfd *poll){
 		_remove_client = true;
 	}
 	return _end_connection;
+}
+
+int	Server::send_response(struct pollfd *poll){
+	std::string page = basic_page();
+	std::string resp = "HTTP/1.1 200 OK\r\nContent-type: text/html\r\nContent-length: ";
+	resp += page.length();
+	resp += "\r\n\r\n";
+	resp += page;
+	resp += "\r\n";
+
+	int ret = send(poll->fd, resp.c_str(), resp.length(), 0);
+	if(ret < 0)
+		return ret;
+	std::cout << "successfully sent " << ret << " bytes\n";
+	poll->events = POLLIN;
+	return ret;
 }
 
 int Server::recieve_data(struct pollfd	*poll){
@@ -168,7 +185,9 @@ int Server::recieve_data(struct pollfd	*poll){
 	_buffer[ret] = '\0';
 	std::cout << "\n" << "===============   "  << ret << " BYTES  RECEIVED   ===============\n";
 	std::cout << _buffer;
-	std::cout << "======================================================" << std::endl;
+	std::cout << "======================================================\n" << std::endl;
 
+	poll->events = POLLOUT;
 	return ret;
+
 }
