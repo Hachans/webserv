@@ -166,10 +166,24 @@ void	Server::parse_first_line(std::string line){
 	_http_request["Version"] = line.substr(lpos, (pos - lpos));
 }
 
-void Server::parse_header(std::string line);
+void Server::parse_header(char* buff){
+	std::stringstream ss(buff);
+	std::string line;
+	size_t	pos;
+
+	std::getline(ss, line, '\n');
+	while(std::getline(ss, line, '\n')){
+		pos = line.find(": ", 0);
+		_http_request[line.substr(0, pos)] = line.substr(pos + 2, line.length() - 1 - pos);
+	}
+}
 
 void	Server::check_values(){
 	std::cout << _http_request["Type"] << std::endl;
 	std::cout << _http_request["Path"] << std::endl;
 	std::cout << _http_request["Version"] << std::endl;
+	std::cout << _http_request["Host"] << std::endl;
+	std::cout << _http_request["Connection"] << std::endl;
+	std::cout << _http_request["Cache-Control"] << std::endl;
+
 }

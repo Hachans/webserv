@@ -15,6 +15,7 @@
 #include <map>
 #include <vector>
 #include <fstream>
+#include <iterator>
 
 #define PORT		4242
 #define SIZE_POLLFD	30000
@@ -50,6 +51,7 @@ class Server{
 		void	setup_err(int err, const char *msg);
 		void	handle_event(size_t ind);
 		void	parse_first_line(std::string line);
+		void	parse_header(char* line);
 
 		void	addToPollFds(std::vector<int>& vect_client, size_t old_size);
 		bool	handle_existing_connection(struct pollfd *poll);
