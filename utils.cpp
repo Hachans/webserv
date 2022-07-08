@@ -204,9 +204,9 @@ void	Server::parse_first_line(std::string line){
 	_http_request["Version"] = line.substr(lpos, (pos - lpos) - 1);
 
 	pos = _http_request["Path"].find('.');
-	if(pos == std::string::npos && _err_string == "200")
+	if(pos == std::string::npos && _err_string == "200" && _http_request["Type"] == "GET")
 		_err_string = "415";
-	else
+	else if (pos != std::string::npos)
 		_http_request["Content-Type"] = _http_request["Path"].substr(pos, _http_request["Path"].length() - pos);
 }
 
@@ -223,10 +223,10 @@ void Server::parse_header(char* buff){
 }
 
 void	Server::check_values(){
-	if((_http_request["Version"].compare("HTTP/1.1") != 0))
+	if((_http_request["Version"] != "HTTP/1.1"))
 		if(_err_string == "200")
 			_err_string = "505";
-	if((_http_request["Type"].compare("GET") != 0) && (_http_request["Type"].compare("POST") != 0) && (_http_request["Type"].compare("DELETE") != 0))
+	if((_http_request["Type"] != "GET") && (_http_request["Type"] != "POST") && (_http_request["Type"] != "DELETE"))
 		if(_err_string == "200")
 			_err_string = "400";
 }
