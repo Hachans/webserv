@@ -45,6 +45,7 @@ class Server{
 	std::vector<int>					_port_numbers;
 	std::list<Server>					_server_list;
 	std::string							_err_string;
+	std::string							_storage;
 
 	public:
 
@@ -85,6 +86,8 @@ class Server{
 		void	process_delete_request();
 		void	process_get_request();
 
+		void	store_data();
+		bool	end_reached();
 };
 
 /* utils.cpp */

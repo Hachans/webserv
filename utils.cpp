@@ -218,7 +218,15 @@ void Server::parse_header(char* buff){
 	std::getline(ss, line, '\n');
 	while(std::getline(ss, line, '\n')){
 		pos = line.find(": ", 0);
-		_http_request[line.substr(0, pos)] = line.substr(pos + 2, line.length() - 1 - pos);
+		if(_http_request["Content-Type"] == "")
+			_http_request[line.substr(0, pos)] = line.substr(pos + 2, line.length() - 1 - pos);
+
+	}
+	if(_http_request["Content-Type"] != ""){
+		size_t pos = _http_request["Content-Type"].find("boundary=") + 10;
+		if(pos != std::string::npos){
+			_http_request["Boundary"] = _http_request["Content-Type"].substr(pos);
+		}
 	}
 }
 
