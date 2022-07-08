@@ -1,7 +1,11 @@
 #include "server.hpp"
 
 Server::Server() : _port(PORT), _remove_poll(false), _err(false){
-
+	// _port_numbers.push_back(4242);
+	// _port_numbers.push_back(8080);
+	// port_launch();
+	// displayAvailableServer();
+	// run_serv();
 }
 
 Server::~Server(){
@@ -9,7 +13,21 @@ Server::~Server(){
 }
 
 Server::Server(int port) : _port(port), _remove_poll(false), _err(false){
+	_port_numbers.push_back(port);
+	_port_numbers.push_back(8080);
+	port_launch();
+	displayAvailableServer();
+	run_serv();
+}
 
+void	Server::displayAvailableServer()
+{
+	std::cout << "\nAvailable servers:" << std::endl << std::endl;
+	for (std::list<Server>::iterator it = _server_list.begin(); it != _server_list.end(); it++)
+	{
+		std::cout << "server =" << it->get_server_fd() << "= port =" << it->getPort() << "="  << std::endl;
+	}
+	std::cout << "\n" << std::endl;
 }
 
 void	Server::setup_err(int err, const char *msg){
@@ -17,11 +35,22 @@ void	Server::setup_err(int err, const char *msg){
 		close(_serv_fd), throw(msg);
 }
 
+void	Server::port_launch(){
+	std::vector<int>& ports = get_port_numbers();
+	for(_nfds = 0; _nfds < 2; _nfds++){
+		Server serv;
+		if(ports.size() > _nfds)
+			serv.set_port(ports[_nfds]);
+		serv.setup_serv();
+		_poll_fds[_nfds].fd = serv.get_server_fd();
+		_poll_fds[_nfds].events = POLLIN;
+		_server_list.push_back(serv);
+	}
+}
+
 void	Server::setup_serv(){
 	int ret;
 	int opt = 1;
-	_nfds = 0;
-	_file_offset = 0;
 	try{
 		_serv_fd = socket(AF_INET, SOCK_STREAM, 0);
 		setup_err(_serv_fd, "error creating socket");
@@ -44,10 +73,6 @@ void	Server::setup_serv(){
 	}
 	_http_table = http_table();
 	_mime_types = initialize_mime_types();
-	_poll_fds[_nfds].fd = get_server_fd();
-	_poll_fds[_nfds].events = POLLIN;
-	_nfds++;
-	this->run_serv();
 }
 
 void	Server::run_serv(){
@@ -74,16 +99,19 @@ void	Server::run_serv(){
 
 void	Server::handle_event(size_t ind){
 	size_t old_size;
-	std::vector<int> &vect_client = this->get_clients();
-	old_size = vect_client.size();
-	if(_poll_fds[ind].fd == this->get_server_fd()){
-		this->accept_connections();
-		addToPollFds(vect_client, old_size);
-	}
-	else if((std::find(vect_client.begin(), vect_client.end(), _poll_fds[ind].fd)) != vect_client.end()){
-		_end_connection = this->handle_existing_connection(&_poll_fds[ind]);
-		if(_end_connection)
-			_remove_poll = true;
+	for(std::list<Server>::iterator it = _server_list.begin(); it != _server_list.end(); it++){
+		Server &curr_serv = *it;
+		std::vector<int> &vect_client = curr_serv.get_clients();
+		old_size = vect_client.size();
+		if(_poll_fds[ind].fd == curr_serv.get_server_fd()){
+			curr_serv.accept_connections();
+			addToPollFds(vect_client, old_size);
+		}
+		else if((std::find(vect_client.begin(), vect_client.end(), _poll_fds[ind].fd)) != vect_client.end()){
+			_end_connection = curr_serv.handle_existing_connection(&_poll_fds[ind]);
+			if(_end_connection)
+				_remove_poll = true;
+		}
 	}
 }
 
@@ -221,5 +249,5 @@ void Server::create_get_response()
 		_response["Content-Type"] = "Content-Type: ";
 		_response["Content-Type"] += _mime_types[_http_request["Content-Type"]];
 	}
-	_response["Connection"] = "Connection: closed\r\n";
+	_response["Connection"] = "Connectio n: closed\r\n";
 }

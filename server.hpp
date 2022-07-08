@@ -14,11 +14,12 @@
 #include <sstream> // For stringstream
 #include <map>
 #include <vector>
+#include <list>
 #include <fstream>
 #include <iterator>
 #include <ctime>
 
-#define PORT		4242
+#define PORT		8080
 #define SIZE_POLLFD	30000
 #define BUFFER_SIZE	8192
 
@@ -34,13 +35,16 @@ class Server{
 	std::vector<int>					_clients;
 	struct sockaddr_in					_address;
 	struct pollfd						_poll_fds[SIZE_POLLFD];
-	nfds_t								_nfds;
+	size_t								_nfds;
 	std::map<std::string, std::string>	_http_request;
 	std::map<std::string, std::string>	_response;
 	std::map<std::string, std::string>	_http_table;
 	std::map<std::string, std::string>	_mime_types;
 	int									_file_size;
 	int									_file_offset;
+	std::vector<int>					_port_numbers;
+
+	std::list<Server>					_server_list;
 
 	public:
 
@@ -49,6 +53,7 @@ class Server{
 		Server(int port);
 		void	setup_serv();
 		void	run_serv();
+		void	port_launch();
 
 		void	accept_connections();
 		void	squeeze_poll();
@@ -66,10 +71,16 @@ class Server{
 		int		recieve_data(struct pollfd	*ptr_tab_poll);
 		int		send_response(struct pollfd *poll);
 		int		get_server_fd(){ return(_serv_fd); }
+		int		getPort(){ return _port; }
 
-		std::vector<int>& get_clients(){ return(_clients); }
+		std::vector<int>& get_clients(){ return _clients; }
+		std::vector<int>& get_port_numbers(){ return _port_numbers; }
 
 		void	create_get_response();
+
+		void	set_port(int port){ _port = port; }
+
+		void	displayAvailableServer();
 
 };
 
@@ -85,6 +96,5 @@ std::string basic_page( void );
 std::string post_page( void );
 
 /* handlers.cpp */
-
 
 #endif
