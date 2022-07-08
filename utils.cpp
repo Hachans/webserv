@@ -204,9 +204,9 @@ void	Server::parse_first_line(std::string line){
 	_http_request["Version"] = line.substr(lpos, (pos - lpos) - 1);
 
 	pos = _http_request["Path"].find('.');
-	if(pos == std::string::npos && _err_string == "200")
+	if(pos == std::string::npos && _err_string == "200" && _http_request["Type"] == "GET")
 		_err_string = "415";
-	else
+	else if (pos != std::string::npos)
 		_http_request["Content-Type"] = _http_request["Path"].substr(pos, _http_request["Path"].length() - pos);
 }
 
@@ -223,11 +223,14 @@ void Server::parse_header(char* buff){
 
 	}
 	if(_http_request["Content-Type"] != ""){
-		size_t pos = _http_request["Content-Type"].find("boundary=") + 10;
-		if(pos != std::string::npos){
-			_http_request["Boundary"] = _http_request["Content-Type"].substr(pos);
+		std::cout << _http_request["Content-Type"] << std::endl;
+		int pos = _http_request["Content-Type"].find("boundary=");
+		std::cout <<  "Possssuuy " << pos << std::endl;
+		if(pos != (int)std::string::npos){
+			_http_request["Boundary"] = _http_request["Content-Type"].substr(pos + 9);
 		}
 	}
+	std::cout << _http_request["Boundary"] << std::endl;
 }
 
 void	Server::check_values(){

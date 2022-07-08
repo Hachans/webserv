@@ -104,6 +104,9 @@ void	Server::run_serv(){
 	catch (const char *msg){
 		std::cout << msg << std::endl;
 	}
+	catch(std::exception const &e){
+		std::cout << e.what() << std::endl;
+	}
 }
 
 void	Server::handle_event(size_t ind){
