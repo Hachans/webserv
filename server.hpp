@@ -43,9 +43,8 @@ class Server{
 	int									_file_size;
 	int									_file_offset;
 	std::vector<int>					_port_numbers;
-	std::string							_err_string;
-
 	std::list<Server>					_server_list;
+	std::string							_err_string;
 
 	public:
 
@@ -54,11 +53,11 @@ class Server{
 		Server(int port);
 		void	setup_serv();
 		void	run_serv();
-		void	port_launch();
+		int		port_launch();
 
 		void	accept_connections();
 		void	squeeze_poll();
-		void	check_values();
+		bool	check_values();
 
 		void	setup_err(int err, const char *msg);
 		void	handle_event(size_t ind);
@@ -73,6 +72,7 @@ class Server{
 		int		send_response(struct pollfd *poll);
 		int		get_server_fd(){ return(_serv_fd); }
 		int		getPort(){ return _port; }
+		bool	check_error(){ return _err; }
 
 		std::vector<int>& get_clients(){ return _clients; }
 		std::vector<int>& get_port_numbers(){ return _port_numbers; }
@@ -82,6 +82,8 @@ class Server{
 		void	set_port(int port){ _port = port; }
 
 		void	displayAvailableServer();
+
+		void	invalid_resp();
 
 };
 

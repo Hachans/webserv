@@ -1,23 +1,28 @@
 #include "server.hpp"
 
 Server::Server() : _port(PORT), _remove_poll(false), _err(false){
-	// _port_numbers.push_back(4242);
-	// _port_numbers.push_back(8080);
-	// port_launch();
-	// displayAvailableServer();
-	// run_serv();
+	// int ret = port_launch();
+	// if(ret == 1)
+	// {
+	// 	displayAvailableServer();
+	// 	run_serv();
+	// }
 }
 
 Server::~Server(){
-
+	_port_numbers.clear();
+	_server_list.clear();
+	_clients.clear();
 }
 
 Server::Server(int port) : _port(port), _remove_poll(false), _err(false){
 	_port_numbers.push_back(port);
-	_port_numbers.push_back(8080);
-	port_launch();
-	displayAvailableServer();
-	run_serv();
+	int ret = port_launch();
+	if(ret == 1)
+	{
+		displayAvailableServer();
+		run_serv();
+	}
 }
 
 void	Server::displayAvailableServer()
@@ -35,17 +40,20 @@ void	Server::setup_err(int err, const char *msg){
 		close(_serv_fd), throw(msg);
 }
 
-void	Server::port_launch(){
+int	Server::port_launch(){
 	std::vector<int>& ports = get_port_numbers();
-	for(_nfds = 0; _nfds < 2; _nfds++){
+	for(_nfds = 0; _nfds < ports.size(); _nfds++){
 		Server serv;
 		if(ports.size() > _nfds)
 			serv.set_port(ports[_nfds]);
 		serv.setup_serv();
+		if(serv.check_error() == true)
+			return -1;
 		_poll_fds[_nfds].fd = serv.get_server_fd();
 		_poll_fds[_nfds].events = POLLIN;
 		_server_list.push_back(serv);
 	}
+	return 1;
 }
 
 void	Server::setup_serv(){
@@ -66,13 +74,13 @@ void	Server::setup_serv(){
 		setup_err(ret, "error binding");
 		_listen_fd = listen(_serv_fd, SIZE_POLLFD);
 		setup_err(_listen_fd, "Error function  the listening");
+		_http_table = http_table();
+		_mime_types = initialize_mime_types();
 	}
 	catch(const char *msg){
 		std::cout << msg << std::endl;
 		_err = true;
 	}
-	_http_table = http_table();
-	_mime_types = initialize_mime_types();
 }
 
 void	Server::run_serv(){
@@ -88,7 +96,6 @@ void	Server::run_serv(){
 				if(_poll_fds[i].revents == 0)
 					continue;
 				handle_event(i);
-				_
 			}
 			squeeze_poll();
 		}
@@ -171,11 +178,12 @@ int	Server::send_response(struct pollfd *poll){
 	if(status == false)
 		resp = _response["Header"] + _response["Date"] + _response["Server"] + _response["Content-Type"] + _response["Content-Length"] + _response["Connection"] + "\r\n" + _response["Body"];
 	int rsize = resp.length();
+	std::cout << "RESPONSE\n\n" << resp << "\n\n";
 	int ret = send(poll->fd, resp.c_str(), (BUFFER_SIZE < rsize ? BUFFER_SIZE : rsize), 0);
 	if(ret < 0)
 		return ret;
 
-	std::cout << "successfully sent " << ret << " bytes remaining: " << rsize << std::endl;
+	std::cout << "successfully sent " << ret << " bytes remaining: " << rsize - ret << std::endl;
 
 	resp.erase(0, ret);
 	status = true;
@@ -251,5 +259,5 @@ void Server::create_get_response()
 		_response["Content-Type"] = "Content-Type: ";
 		_response["Content-Type"] += _mime_types[_http_request["Content-Type"]];
 	}
-	_response["Connection"] = "Connectio n: closed\r\n";
+	_response["Connection"] = "Connection: closed\r\n";
 }

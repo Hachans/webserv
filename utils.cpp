@@ -222,13 +222,10 @@ void Server::parse_header(char* buff){
 	}
 }
 
-void	Server::check_values(){
-	std::cout << _http_request["Type"] << std::endl;
-	std::cout << _http_request["Path"] << std::endl;
-	std::cout << _http_request["Content-Type"] << std::endl;
-	std::cout << _http_request["Version"] << std::endl;
-	std::cout << _http_request["Host"] << std::endl;
-	std::cout << _http_request["Connection"] << std::endl;
-	std::cout << _http_request["Cache-Control"] << std::endl;
-
+bool	Server::check_values(){
+	if((_http_request["Type"].compare("GET") != 0) && (_http_request["Type"].compare("POST") != 0) && (_http_request["Type"].compare("DELETE") != 0))
+		return false;
+	if((_http_request["Version"].compare("HTTP/1.1") != 0))
+		return false;
+	return true;
 }
