@@ -60,6 +60,7 @@ void	Server::setup_serv(){
 	int ret;
 	int opt = 1;
 	try{
+		_err_string = "200";
 		_serv_fd = socket(AF_INET, SOCK_STREAM, 0);
 		setup_err(_serv_fd, "error creating socket");
 		ret = setsockopt(_serv_fd, SOL_SOCKET, SO_REUSEADDR, (char*)&opt, sizeof(opt));
@@ -117,7 +118,6 @@ void	Server::handle_event(size_t ind){
 		}
 		else if((std::find(vect_client.begin(), vect_client.end(), _poll_fds[ind].fd)) != vect_client.end()){
 			_end_connection = curr_serv.handle_existing_connection(&_poll_fds[ind]);
-			_err_string = "200";
 			if(_end_connection)
 				_remove_poll = true;
 		}
@@ -229,13 +229,18 @@ void Server::create_get_response()
 	_response["Date"] = "Date: ";
 	_response["Date"] += buf;
 	_response["Date"] += "\r\n";
-	if (!file)
+	if (!file && _err_string == "200")
+		_err_string = "404";
+	if (_err_string != "200")
 	{
 		_response["Header"] = _http_request["Version"];
-		_response["Header"] += " 404 ";
-		_response["Header"] += _http_table["404"];
-		_response["Server"] += "Server: Webserv\r\n";
-		_response["Body"] = generate_html("404");
+		_response["Header"] += " ";
+		_response["Header"] += _err_string;
+		_response["Header"] += " ";
+		_response["Header"] += _http_table[_err_string];
+		_response["Server"] = "Server: Webserv\r\n";
+		_response["Body"] = generate_html(_err_string);
+		_file_size = _response["Body"].length();
 		_response["Content-Length"] = "Content-Length: ";
 		ss2 << _response["Body"].length();
 		_response["Content-Length"] += ss2.str();
@@ -249,7 +254,7 @@ void Server::create_get_response()
 		_response["Header"] = _http_request["Version"];
 		_response["Header"] += " 200 ";
 		_response["Header"] += _http_table["200"];
-		_response["Server"] += "Server: Webserv\r\n";
+		_response["Server"] = "Server: Webserv\r\n";
 		_response["Body"] = ss.str();
 		_response["Content-Length"] = "Content-Length: ";
 		_file_size = _response["Body"].length();
@@ -260,4 +265,5 @@ void Server::create_get_response()
 		_response["Content-Type"] += _mime_types[_http_request["Content-Type"]];
 	}
 	_response["Connection"] = "Connection: closed\r\n";
+	_err_string = "200";
 }

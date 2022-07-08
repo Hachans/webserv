@@ -205,7 +205,7 @@ void	Server::parse_first_line(std::string line){
 
 	pos = _http_request["Path"].find('.');
 	if(pos == std::string::npos)
-		_err_string = _http_table["415"];
+		_err_string = "415";
 	else
 		_http_request["Content-Type"] = _http_request["Path"].substr(pos, _http_request["Path"].length() - pos);
 }
