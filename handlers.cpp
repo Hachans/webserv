@@ -57,7 +57,6 @@ void	Server::process_post_request()
 		file_name = _http_request["Content-Disposition"].substr(pos);
 		file_name = file_name.substr(0, file_name.length() - 2);
 	}
-	
 	std::ifstream file(file_name);
 	if (file && _err_string == "200")
 		_err_string = "422";

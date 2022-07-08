@@ -196,9 +196,9 @@ int	Server::send_response(struct pollfd *poll){
 		resp = _response["Header"] + _response["Date"] + _response["Server"] + _response["Content-Type"] + _response["Content-Length"] + _response["Connection"] + "\r\n" + _response["Body"];
 	int rsize = resp.length();
 	int ret = send(poll->fd, resp.c_str(), (BUFFER_SIZE < rsize ? BUFFER_SIZE : rsize), 0);
+	_http_request["Content-Type"] = "";
 	if(ret < 0)
 		return ret;
-
 	std::cout << "successfully sent " << ret << " bytes remaining: " << rsize - ret << std::endl;
 
 	resp.erase(0, ret);
