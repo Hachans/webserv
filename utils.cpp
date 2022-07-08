@@ -204,7 +204,10 @@ void	Server::parse_first_line(std::string line){
 	_http_request["Version"] = line.substr(lpos, (pos - lpos) - 1);
 
 	pos = _http_request["Path"].find('.');
-	_http_request["Content-Type"] = _http_request["Path"].substr(pos, _http_request["Path"].length() - 1);
+	if(pos == std::string::npos)
+		_err_string = _http_table["415"];
+	else
+		_http_request["Content-Type"] = _http_request["Path"].substr(pos, _http_request["Path"].length() - pos);
 }
 
 void Server::parse_header(char* buff){

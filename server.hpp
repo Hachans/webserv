@@ -43,6 +43,7 @@ class Server{
 	int									_file_size;
 	int									_file_offset;
 	std::vector<int>					_port_numbers;
+	std::string							_err_string;
 
 	std::list<Server>					_server_list;
 
