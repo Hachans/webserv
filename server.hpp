@@ -77,13 +77,13 @@ class Server{
 		std::vector<int>& get_clients(){ return _clients; }
 		std::vector<int>& get_port_numbers(){ return _port_numbers; }
 
-		void	create_get_response();
-
 		void	set_port(int port){ _port = port; }
-
 		void	displayAvailableServer();
 
+		void	process_request();
 		void	process_post_request();
+		void	process_delete_request();
+		void	process_get_request();
 
 };
 

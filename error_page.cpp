@@ -18,7 +18,6 @@ std::string basic_page( void ){
 
 	std::stringstream ss;
 	ss << "<html>\r\n<body>\r\n<h1>Basic page for testing.</h1>\r\n</body>\r\n</html>\r\n";
-	std::cout << ss.str() << std::endl;
 	return (ss.str());
 }
 
@@ -26,7 +25,6 @@ std::string delete_page( void ){
 
 	std::stringstream ss;
 	ss << "<html>\r\n<body>\r\n<h1>File deleted.</h1>\r\n</body>\r\n</html>\r\n";
-	std::cout << ss.str() << std::endl;
 	return (ss.str());
 }
 
@@ -34,6 +32,5 @@ std::string post_page( void ){
 
 	std::stringstream ss;
 	ss << "<html>\r\n<body>\r\n<h1>File posted.</h1>\r\n</body>\r\n</html>\r\n";
-	std::cout << ss.str() << std::endl;
 	return (ss.str());
 }

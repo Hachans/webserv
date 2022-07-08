@@ -158,10 +158,7 @@ bool	Server::handle_existing_connection(struct pollfd *poll){
 	else if((ret = recieve_data(poll)) > 0){
 		parse_first_line(std::string(_buffer));
 		parse_header(_buffer);
-		if (_http_request["Type"] == "POST")
-			process_post_request();
-		else
-			create_get_response();
+		process_request();
 		poll->events = POLLOUT;
 		
 	}
@@ -174,13 +171,23 @@ bool	Server::handle_existing_connection(struct pollfd *poll){
 	return _end_connection;
 }
 
+
+void Server::process_request(){
+	if (_http_request["Type"] == "POST")
+		process_post_request();
+	else if(_http_request["Type"] == "DELETE")
+		process_delete_request();
+	else
+		process_get_request();
+}
+
+
 int	Server::send_response(struct pollfd *poll){
 	static bool status = true;
 	static std::string resp = _response["Header"] + _response["Date"] + _response["Server"] + _response["Content-Type"] + _response["Content-Length"] + _response["Connection"] + "\r\n" + _response["Body"];
 	if(status == false)
 		resp = _response["Header"] + _response["Date"] + _response["Server"] + _response["Content-Type"] + _response["Content-Length"] + _response["Connection"] + "\r\n" + _response["Body"];
 	int rsize = resp.length();
-	std::cout << "RESPONSE\n\n" << resp << "\n\n";
 	int ret = send(poll->fd, resp.c_str(), (BUFFER_SIZE < rsize ? BUFFER_SIZE : rsize), 0);
 	if(ret < 0)
 		return ret;
@@ -218,7 +225,7 @@ int Server::recieve_data(struct pollfd	*poll){
 
 }
 
-void Server::create_get_response()
+void Server::process_get_request()
 {
 	std::fstream file(_http_request["Path"]);
 	std::stringstream ss;
@@ -235,36 +242,24 @@ void Server::create_get_response()
 		_err_string = "404";
 	if (_err_string != "200")
 	{
-		_response["Header"] = _http_request["Version"];
-		_response["Header"] += " ";
-		_response["Header"] += _err_string;
-		_response["Header"] += " ";
-		_response["Header"] += _http_table[_err_string];
+		_response["Header"] = _http_request["Version"] + " " + _err_string + " " + _http_table[_err_string];
 		_response["Server"] = "Server: Webserv\r\n";
 		_response["Body"] = generate_html(_err_string);
-		_file_size = _response["Body"].length();
-		_response["Content-Length"] = "Content-Length: ";
 		ss2 << _response["Body"].length();
-		_response["Content-Length"] += ss2.str();
-		_response["Content-Length"] += "\r\n";
-		_response["Content-Type"] = "Content-Type: ";
-		_response["Content-Type"] += _mime_types[".html"];
+		// _file_size = _response["Body"].length();
+		_response["Content-Length"] = "Content-Length: " + ss2.str() + "\r\n";
+		_response["Content-Type"] = "Content-Type: " + _mime_types[".html"];
 	}
 	else
 	{
 		ss << file.rdbuf();
-		_response["Header"] = _http_request["Version"];
-		_response["Header"] += " 200 ";
-		_response["Header"] += _http_table["200"];
+		_response["Header"] = _http_request["Version"] + " 200 " + _http_table["200"];
 		_response["Server"] = "Server: Webserv\r\n";
 		_response["Body"] = ss.str();
-		_response["Content-Length"] = "Content-Length: ";
 		_file_size = _response["Body"].length();
 		ss2 << _response["Body"].length();
-		_response["Content-Length"] += ss2.str();
-		_response["Content-Length"] += "\r\n";
-		_response["Content-Type"] = "Content-Type: ";
-		_response["Content-Type"] += _mime_types[_http_request["Content-Type"]];
+		_response["Content-Length"] = "Content-Length: " + ss2.str() + "\r\n";
+		_response["Content-Type"] = "Content-Type: " + _mime_types[_http_request["Content-Type"]];
 	}
 	_response["Connection"] = "Connection: closed\r\n";
 	_err_string = "200";
@@ -272,19 +267,51 @@ void Server::create_get_response()
 
 void	Server::process_post_request()
 {
-	int pos = _http_request["Content-Disposition"].find("filename=") + 10;
-	std::string file_name = _http_request["Content-Disposition"].substr(pos);
-	file_name = file_name.substr(0, file_name.length() - 2);
+	std::stringstream len;
+	char buf[1000];
+	time_t now = time(0);
+	struct tm tm = *gmtime(&now);
+	strftime(buf, sizeof buf, "%a, %d %b %Y %H:%M:%S %Z", &tm);
+	_response["Date"] = "Date: ";
+	_response["Date"] += buf;
+	_response["Date"] += "\r\n";
 
-	std::ifstream file(file_name);
-	if (file)
-	{
-		_err_string = "422";
-		file.close();
-		return ;
+	std::string file_name = _http_request["Path"];
+	if(_http_request["Content-Disposition"] != ""){
+		int pos = _http_request["Content-Disposition"].find("filename=") + 10;
+		file_name = _http_request["Content-Disposition"].substr(pos);
+		file_name = file_name.substr(0, file_name.length() - 2);
 	}
-	std::ofstream ofs("test_files/" + file_name);
-	ofs << _http_request["Body"];
+	
+	std::ifstream file(file_name);
+	if (file && _err_string == "200")
+		_err_string = "422";
+	file.close();
+	if(_err_string != "200"){
+		_response["Header"] = _http_request["Version"] + " " + _err_string + " " + _http_table[_err_string];
+		_response["Server"] = "Server: Webserv\r\n";
+		_response["Body"] = generate_html(_err_string);
+		_response["Content-Length"] = "Content-Length: ";
+		len << _response["Body"].length();
+		_response["Content-Length"] += len.str() + "\r\n";
+		_response["Content-Type"] = "Content-Type: " + _mime_types[".html"];
+	}
+	else{
+		std::ofstream ofs(file_name);
+		ofs.close();
+		_response["Header"] = _http_request["Version"] + " 200 " + _http_table["200"];
+		_response["Server"] = "Server: Webserv\r\n";
+		_response["Body"] = post_page();
+		len << _response["Body"].length();
+		_response["Content-Length"] = "Content-Length: " + len.str() + "\r\n";
+		_response["Content-Type"] = "Content-Type: ";
+		_response["Content-Type"] += _mime_types[".html"];
+	}
+	_response["Connection"] = "Connection: closed\r\n";
+	_err_string = "200";
+}
+
+void Server::process_delete_request(){
 
 	std::stringstream len;
 	char buf[1000];
@@ -294,16 +321,29 @@ void	Server::process_post_request()
 	_response["Date"] = "Date: ";
 	_response["Date"] += buf;
 	_response["Date"] += "\r\n";
-	_response["Header"] = _http_request["Version"];
-	_response["Header"] += " 200 ";
-	_response["Header"] += _http_table["200"];
-	_response["Server"] = "Server: Webserv\r\n";
-	_response["Body"] = post_page();
-	len << _response["Body"].length();
-	_response["Content-Length"] += len.str();
-	_response["Content-Length"] += "\r\n";
-	_response["Content-Type"] = "Content-Type: ";
-	_response["Content-Type"] += _mime_types[".html"];
+
+	int status = remove(_http_request["Path"].c_str());
+	if (status != 0 && _err_string == "200")
+		_err_string = "204";
+	if(_err_string != "200"){
+		_response["Header"] = _http_request["Version"] + " " + _err_string + " " + _http_table[_err_string];
+		_response["Server"] = "Server: Webserv\r\n";
+		_response["Body"] = generate_html(_err_string);
+		_response["Content-Length"] = "Content-Length: ";
+		len << _response["Body"].length();
+		_response["Content-Length"] += len.str() + "\r\n";
+		_response["Content-Type"] = "Content-Type: " + _mime_types[".html"];
+	}
+	else{
+		_response["Header"] = _http_request["Version"] + " 200 " + _http_table["200"];
+		_response["Server"] = "Server: Webserv\r\n";
+		_response["Body"] = delete_page();
+		len << _response["Body"].length();
+		_response["Content-Length"] = "Content-Length: " + len.str() + "\r\n";
+		_response["Content-Type"] = "Content-Type: ";
+		_response["Content-Type"] += _mime_types[".html"];
+	}
+
 	_response["Connection"] = "Connection: closed\r\n";
 	_err_string = "200";
 }
