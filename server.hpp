@@ -83,7 +83,7 @@ class Server{
 
 		void	displayAvailableServer();
 
-		void	invalid_resp();
+		void	process_post_request();
 
 };
 
