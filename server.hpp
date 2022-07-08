@@ -57,7 +57,7 @@ class Server{
 
 		void	accept_connections();
 		void	squeeze_poll();
-		bool	check_values();
+		void	check_values();
 
 		void	setup_err(int err, const char *msg);
 		void	handle_event(size_t ind);

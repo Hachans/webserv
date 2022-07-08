@@ -222,10 +222,11 @@ void Server::parse_header(char* buff){
 	}
 }
 
-bool	Server::check_values(){
-	if((_http_request["Type"].compare("GET") != 0) && (_http_request["Type"].compare("POST") != 0) && (_http_request["Type"].compare("DELETE") != 0))
-		return false;
+void	Server::check_values(){
 	if((_http_request["Version"].compare("HTTP/1.1") != 0))
-		return false;
-	return true;
+		if(_err_string == "200")
+			_err_string = "505";
+	if((_http_request["Type"].compare("GET") != 0) && (_http_request["Type"].compare("POST") != 0) && (_http_request["Type"].compare("DELETE") != 0))
+		if(_err_string == "200")
+			_err_string = "400";
 }

@@ -158,6 +158,7 @@ bool	Server::handle_existing_connection(struct pollfd *poll){
 	else if((ret = recieve_data(poll)) > 0){
 		parse_first_line(std::string(_buffer));
 		parse_header(_buffer);
+		check_values();
 		create_get_response();
 		std::cout << "File size: " << _file_size << std::endl;
 		poll->events = POLLOUT;
