@@ -150,8 +150,10 @@ bool	Server::handle_existing_connection(struct pollfd *poll){
 	else if((ret = recieve_data(poll)) > 0){
 		parse_first_line(std::string(_buffer));
 		parse_header(_buffer);
-		create_get_response();
-		std::cout << "File size: " << _file_size << std::endl;
+		if (_http_request["Type"] == "POST")
+			process_post_request();
+		else
+			create_get_response();
 		poll->events = POLLOUT;
 		
 	}
@@ -255,6 +257,44 @@ void Server::create_get_response()
 		_response["Content-Type"] = "Content-Type: ";
 		_response["Content-Type"] += _mime_types[_http_request["Content-Type"]];
 	}
+	_response["Connection"] = "Connection: closed\r\n";
+	_err_string = "200";
+}
+
+void	Server::process_post_request()
+{
+	int pos = _http_request["Content-Disposition"].find("filename=") + 10;
+	std::string file_name = _http_request["Content-Disposition"].substr(pos);
+	file_name = file_name.substr(0, file_name.length() - 2);
+
+	std::ifstream file(file_name);
+	if (file)
+	{
+		_err_string = "422";
+		file.close();
+		return ;
+	}
+	std::ofstream ofs("test_files/" + file_name);
+	ofs << _http_request["Body"];
+
+	std::stringstream len;
+	char buf[1000];
+	time_t now = time(0);
+	struct tm tm = *gmtime(&now);
+	strftime(buf, sizeof buf, "%a, %d %b %Y %H:%M:%S %Z", &tm);
+	_response["Date"] = "Date: ";
+	_response["Date"] += buf;
+	_response["Date"] += "\r\n";
+	_response["Header"] = _http_request["Version"];
+	_response["Header"] += " 200 ";
+	_response["Header"] += _http_table["200"];
+	_response["Server"] = "Server: Webserv\r\n";
+	_response["Body"] = post_page();
+	len << _response["Body"].length();
+	_response["Content-Length"] += len.str();
+	_response["Content-Length"] += "\r\n";
+	_response["Content-Type"] = "Content-Type: ";
+	_response["Content-Type"] += _mime_types[".html"];
 	_response["Connection"] = "Connection: closed\r\n";
 	_err_string = "200";
 }

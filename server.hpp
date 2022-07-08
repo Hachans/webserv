@@ -83,6 +83,8 @@ class Server{
 
 		void	displayAvailableServer();
 
+		void	process_post_request();
+
 };
 
 /* utils.cpp */
