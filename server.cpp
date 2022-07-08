@@ -88,6 +88,7 @@ void	Server::run_serv(){
 				if(_poll_fds[i].revents == 0)
 					continue;
 				handle_event(i);
+				_
 			}
 			squeeze_poll();
 		}
@@ -109,6 +110,7 @@ void	Server::handle_event(size_t ind){
 		}
 		else if((std::find(vect_client.begin(), vect_client.end(), _poll_fds[ind].fd)) != vect_client.end()){
 			_end_connection = curr_serv.handle_existing_connection(&_poll_fds[ind]);
+			_err_string = "200";
 			if(_end_connection)
 				_remove_poll = true;
 		}
