@@ -229,12 +229,9 @@ void Server::parse_header(char* buff){
 		if(pos != (int)std::string::npos){
 			_http_request["Boundary"] = _http_request["Content-Type"].substr(pos + 9);
 		}
-		std::cout << _http_request["Content-Type"] << std::endl;
 	}
 	if(_http_request["Type"] == "POST")
 		_http_request["Boundary"].erase(_http_request["Boundary"].length() - 1, 1);
-
-	std::cout << "BOUUDND: " << _http_request["Boundary"] << std::endl;
 }
 
 void	Server::check_values(){

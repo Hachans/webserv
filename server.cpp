@@ -183,12 +183,21 @@ bool	Server::handle_existing_connection(struct pollfd *poll){
 
 
 void Server::process_request(){
-	if (_http_request["Type"] == "POST")
+	if(_http_request["Type"] == "GET")
+		process_get_request();
+	else if (_http_request["Type"] == "POST")
 		process_post_request();
 	else if(_http_request["Type"] == "DELETE")
 		process_delete_request();
-	else
+	else if(_http_request["Type"] == "HEAD" || _http_request["Type"] == "PUT" || _http_request["Type"] == "CONNECT" || _http_request["Type"] == "TRACE" || _http_request["Type"] == "PATCH" || _http_request["Type"] == "OPTIONS")
+	{
+		_err_string = "501";
 		process_get_request();
+	}
+	else{
+		_err_string = "400";
+		process_get_request();
+	}
 }
 
 

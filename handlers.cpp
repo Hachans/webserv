@@ -21,7 +21,6 @@ void Server::process_get_request()
 		_response["Server"] = "Server: Webserv\r\n";
 		_response["Body"] = generate_html(_err_string);
 		ss2 << _response["Body"].length();
-		// _file_size = _response["Body"].length();
 		_response["Content-Length"] = "Content-Length: " + ss2.str() + "\r\n";
 		_response["Content-Type"] = "Content-Type: " + _mime_types[".html"];
 	}
