@@ -43,23 +43,6 @@ void Server::process_get_request()
 
 void	Server::process_post_request()
 {
-<<<<<<< HEAD
-	std::stringstream len;
-	char buf[1000];
-	time_t now = time(0);
-	struct tm tm = *gmtime(&now);
-	strftime(buf, sizeof buf, "%a, %d %b %Y %H:%M:%S %Z", &tm);
-	_response["Date"] = "Date: ";
-	_response["Date"] += buf;
-	_response["Date"] += "\r\n";
-
-
-	std::string file_name = _http_request["Path"];
-	if(_http_request["Content-Disposition"] != ""){
-		int pos = _http_request["Content-Disposition"].find("filename=") + 10;
-		file_name = _http_request["Content-Disposition"].substr(pos);
-		file_name = file_name.substr(0, file_name.length() - 2);
-=======
 	int pos = (int)std::string::npos;
 	int pos2 = (int)std::string::npos;
 	static bool start = true;
@@ -80,7 +63,6 @@ void	Server::process_post_request()
 			start = true;
 			std::cout << "bruh" << std::endl;
 		}
->>>>>>> 97232d9285be1fb55cd4c4c2ff9d751e71cad8d9
 	}
 	else
 		_storage_data += _storage;

@@ -231,13 +231,10 @@ void Server::parse_header(char* buff){
 		}
 		std::cout << _http_request["Content-Type"] << std::endl;
 	}
-<<<<<<< HEAD
-=======
 	if(_http_request["Type"] == "POST")
 		_http_request["Boundary"].erase(_http_request["Boundary"].length() - 1, 1);
 
 	std::cout << "BOUUDND: " << _http_request["Boundary"] << std::endl;
->>>>>>> 97232d9285be1fb55cd4c4c2ff9d751e71cad8d9
 }
 
 void	Server::check_values(){
