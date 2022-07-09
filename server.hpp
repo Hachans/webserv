@@ -46,6 +46,8 @@ class Server{
 	std::list<Server>					_server_list;
 	std::string							_err_string;
 	std::string							_storage;
+	bool								_finished;
+	std::string							_storage_data;
 
 	public:
 

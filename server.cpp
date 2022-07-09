@@ -1,6 +1,6 @@
 #include "server.hpp"
 
-Server::Server() : _port(PORT), _remove_poll(false), _err(false){
+Server::Server() : _port(PORT), _remove_poll(false), _err(false), _finished(false){
 	// int ret = port_launch();
 	// if(ret == 1)
 	// {
@@ -15,7 +15,7 @@ Server::~Server(){
 	_clients.clear();
 }
 
-Server::Server(int port) : _port(port), _remove_poll(false), _err(false){
+Server::Server(int port) : _port(port), _remove_poll(false), _err(false), _finished(false){
 	_port_numbers.push_back(port);
 	int ret = port_launch();
 	if(ret == 1)
@@ -104,9 +104,9 @@ void	Server::run_serv(){
 	catch (const char *msg){
 		std::cout << msg << std::endl;
 	}
-	catch(std::exception const &e){
-		std::cout << e.what() << std::endl;
-	}
+	// catch(std::exception const &e){
+	// 	std::cout << e.what() << std::endl;
+	// }
 }
 
 void	Server::handle_event(size_t ind){
@@ -159,14 +159,17 @@ bool	Server::handle_existing_connection(struct pollfd *poll){
 		}
 	}
 	else if((ret = recieve_data(poll)) > 0){
-		// store_data();
-		// if(end_reached() == true){
+		if(_storage_data == ""){
 			parse_first_line(std::string(_buffer));
 			parse_header(_buffer);
-			check_values();
-			process_request();
+		}
+		process_request();
+		if(_finished == true){
 			poll->events = POLLOUT;
-		// }
+			_storage = "";
+			_storage_data = "";
+			_finished = false;
+		}
 	}
 	if(_end_connection){
 		close(poll->fd);
@@ -197,6 +200,7 @@ int	Server::send_response(struct pollfd *poll){
 	int rsize = resp.length();
 	int ret = send(poll->fd, resp.c_str(), (BUFFER_SIZE < rsize ? BUFFER_SIZE : rsize), 0);
 	_http_request["Content-Type"] = "";
+	_http_request["Content-Disposition"] = "";
 	if(ret < 0)
 		return ret;
 	std::cout << "successfully sent " << ret << " bytes remaining: " << rsize - ret << std::endl;
@@ -224,6 +228,10 @@ int Server::recieve_data(struct pollfd	*poll){
 		return ret;
 	}
 	_buffer[ret] = '\0';
+	std::stringstream ss;
+	for (int i = 0; i < ret; i++)
+		ss << _buffer[i];
+	_storage = ss.str();
 	std::cout << "\n" << "===============   "  << ret << " BYTES  RECEIVED   ===============\n";
 	std::cout << _buffer;
 	std::cout << "======================================================\n" << std::endl;
