@@ -150,4 +150,5 @@ void	Server::process_post_request()
 
 		_response["Connection"] = "Connection: closed\r\n";
 		_err_string = "200";
+		_finished == true;
 }

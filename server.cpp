@@ -67,11 +67,11 @@ void	Server::setup_serv(){
 		setup_err(ret, "error set socket");
 		ret = fcntl(_serv_fd, F_SETFL, O_NONBLOCK);
 		setup_err(ret, "error fcntl");
-		_address.sin_family = AF_INET;// IPv4 protocol
+		_address.sin_family = AF_INET;
 		memset(&_address.sin_zero, 0, sizeof(_address.sin_zero));
 		_address.sin_addr.s_addr = INADDR_ANY;
 		_address.sin_port = htons(_port);
-		ret = bind(_serv_fd, (struct sockaddr *)&_address, sizeof(_address));// Forcefully attaching socket to the port
+		ret = bind(_serv_fd, (struct sockaddr *)&_address, sizeof(_address));
 		setup_err(ret, "error binding");
 		_listen_fd = listen(_serv_fd, SIZE_POLLFD);
 		setup_err(_listen_fd, "Error function  the listening");
@@ -104,9 +104,9 @@ void	Server::run_serv(){
 	catch (const char *msg){
 		std::cout << msg << std::endl;
 	}
-	// catch(std::exception const &e){
-	// 	std::cout << e.what() << std::endl;
-	// }
+	catch(std::exception const &e){
+		std::cout << e.what() << std::endl;
+	}
 }
 
 void	Server::handle_event(size_t ind){
