@@ -104,9 +104,9 @@ void	Server::run_serv(){
 	catch (const char *msg){
 		std::cout << msg << std::endl;
 	}
-	catch(std::exception const &e){
-		std::cout << e.what() << std::endl;
-	}
+	// catch(std::exception const &e){
+	// 	std::cout << e.what() << std::endl;
+	// }
 }
 
 void	Server::handle_event(size_t ind){
@@ -200,6 +200,7 @@ int	Server::send_response(struct pollfd *poll){
 	int rsize = resp.length();
 	int ret = send(poll->fd, resp.c_str(), (BUFFER_SIZE < rsize ? BUFFER_SIZE : rsize), 0);
 	_http_request["Content-Type"] = "";
+	_http_request["Content-Disposition"] = "";
 	if(ret < 0)
 		return ret;
 	std::cout << "successfully sent " << ret << " bytes remaining: " << rsize - ret << std::endl;
