@@ -218,7 +218,9 @@ void Server::parse_header(char* buff){
 	std::getline(ss, line, '\n');
 	while(std::getline(ss, line, '\n')){
 		pos = line.find(": ", 0);
-		if(_http_request["Content-Type"] == "")
+		if(_http_request["Content-Type"] == "" && line.substr(0, pos) == "Content-Type")
+			_http_request["Content-Type"] = line.substr(pos + 2, line.length() - 1 - pos);
+		else if (line.substr(0, pos) != "Content-Type")
 			_http_request[line.substr(0, pos)] = line.substr(pos + 2, line.length() - 1 - pos);
 
 	}
@@ -234,10 +236,10 @@ void Server::parse_header(char* buff){
 }
 
 void	Server::check_values(){
-	if((_http_request["Version"].compare("HTTP/1.1") != 0))
+	if((_http_request["Version"] != "HTTP/1.1"))
 		if(_err_string == "200")
 			_err_string = "505";
-	if((_http_request["Type"].compare("GET") != 0) && (_http_request["Type"].compare("POST") != 0) && (_http_request["Type"].compare("DELETE") != 0))
+	if((_http_request["Type"] != "GET") && (_http_request["Type"] != "POST") && (_http_request["Type"] != "DELETE"))
 		if(_err_string == "200")
 			_err_string = "400";
 }
