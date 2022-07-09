@@ -38,10 +38,25 @@ void Server::process_get_request()
 	}
 	_response["Connection"] = "Connection: closed\r\n";
 	_err_string = "200";
+	_finished = true;
 }
 
 void	Server::process_post_request()
 {
+	int pos = (int)std::string::npos;
+	if((pos = _storage.find("--" + _http_request["Boundary"])) != (int)std::string::npos){
+		_storage = _storage.substr(pos);
+		if ((pos = _storage.find("\r\n\r\n")) != (int)std::string::npos)
+			_storage_data = _storage.substr(pos + 4);
+	}
+	else{
+		if ((pos = (int)_storage.find("--" + _http_request["Boundary"] + "--") != (int)std::string::npos)){
+			_finished = true;
+			_storage_data += _storage.substr(0, pos);
+		}
+		else
+			_storage_data += _storage;
+	}
 	std::stringstream len;
 	char buf[1000];
 	time_t now = time(0);
@@ -73,6 +88,7 @@ void	Server::process_post_request()
 	}
 	else{
 		std::ofstream ofs(file_name);
+		ofs << _storage_data;
 		ofs.close();
 		_response["Header"] = _http_request["Version"] + " 200 " + _http_table["200"];
 		_response["Server"] = "Server: Webserv\r\n";
