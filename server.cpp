@@ -4,16 +4,9 @@ Server::Server(conf_data *data) : _port(PORT), _err(false), _finished(false), _d
 
 }
 
-// Server::Server() : _port(PORT), _err(false), _finished(false){
-
-// }
-
 Server::~Server(){
 }
 
-// Server::Server(int port) : _port(port), _err(false), _finished(false){
-
-// }
 
 void	Server::setup_err(int err, const char *msg){
 	if(err < 0)
@@ -52,12 +45,12 @@ void	Server::setup_serv(){
 void Server::accept_connections(){
 	int new_sock = 0;
 	int addrlen = sizeof(_address);
-	while(new_sock != -1){
+	while(new_sock != ERR){
 		new_sock = accept(_serv_fd, (sockaddr*)&_address, (socklen_t*)&addrlen);
 		if(new_sock < 0){
 			if(errno != EWOULDBLOCK)
 				setup_err(new_sock, "error accept()");
-			new_sock = -1;
+			new_sock = ERR;
 		}
 		else{
 			std::cout << "new client:" << new_sock << std::endl;
@@ -70,7 +63,7 @@ void Server::accept_connections(){
 bool	Server::handle_existing_connection(struct pollfd *poll){
 	int ret;
 	_end_connection = false;
-	
+
 	if(poll->revents & POLLOUT){
 		ret = send_response(poll);
 		if(ret < 0)
@@ -96,7 +89,7 @@ bool	Server::handle_existing_connection(struct pollfd *poll){
 	if(_end_connection){
 		close(poll->fd);
 		squeeze_client_vect(poll->fd);
-		poll->fd = -1;
+		poll->fd = REM;
 		_remove_client = true;
 	}
 	return _end_connection;
@@ -168,4 +161,14 @@ int Server::recieve_data(struct pollfd	*poll){
 	std::cout << "======================================================\n" << std::endl;
 
 	return ret;
+}
+
+void	Server::squeeze_client_vect(int to_find)
+{
+	for (std::vector<int>::iterator it = _clients.begin(); it !=  _clients.end() ; it++){
+		if (*it == to_find){
+			_clients.erase(it);
+			return ;
+		}
+	}
 }

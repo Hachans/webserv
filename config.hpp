@@ -2,23 +2,6 @@
 #define config_hpp
 
 #include "server.hpp"
-// #include <sys/socket.h> // For socket functions
-// #include <netinet/in.h> // For sockaddr_in
-// #include <cstdlib> // For exit() and EXIT_FAILURE
-// #include <iostream> // For cout
-// #include <unistd.h> // For read
-// #include <fcntl.h> // For fcntl
-// #include <netdb.h> // For addrinfo
-// #include <arpa/inet.h> // For inet_ntop
-// #include <sys/stat.h>
-// #include <map>
-// #include <vector>
-// #include <iostream>
-// #include <fstream>
-// #include <cstdlib>
-// #include <cstring>
-// #include <sstream>
-// #include <stdlib.h>
 
 class Server;
 

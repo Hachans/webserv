@@ -1,9 +1,6 @@
 #include "socket.hpp"
 
 Socket::Socket(std::vector<conf_data*> *vect) : _conf_vector(vect){
-	if(_conf_vector){
-
-	}
 	int ret = port_launch();
 	if(ret == 1)
 	{
@@ -23,7 +20,7 @@ int	Socket::port_launch(){
 			serv.set_port(serv.get_data()->s_port());
 		serv.setup_serv();
 		if(serv.check_error() == true)
-			return -1;
+			return ERR;
 		_poll_fds[_nfds].fd = serv.get_server_fd();
 		_poll_fds[_nfds].events = POLLIN;
 		_server_list.push_back(serv);
@@ -35,7 +32,7 @@ void	Socket::run_serv(){
 	int ret;
 	try{
 		while(true){
-			ret = poll(_poll_fds, _nfds, -1);
+			ret = poll(_poll_fds, _nfds, TOUT);
 			if(ret < 0)
 				throw("error poll()");
 			if(ret == 0)
@@ -79,12 +76,8 @@ void	Socket::displayAvailableServer()
 {
 	std::cout << "\nAvailable servers:" << std::endl << std::endl;
 	for (std::list<Server>::iterator it = _server_list.begin(); it != _server_list.end(); it++)
-	{
 		std::cout << "server =" << it->get_server_fd() << "= port =" << it->getPort() << "="  << std::endl;
-	}
 	std::cout << "\n" << std::endl;
-
-	// std::cout << "PRINT: " << _conf_vector[0][0]->s_host() << std::endl;
 }
 
 void	Socket::squeeze_poll()
@@ -92,7 +85,7 @@ void	Socket::squeeze_poll()
 	if (_remove_poll){
 		_remove_poll = false;
 		for (size_t i = 0; i < _nfds; i++){
-			if (_poll_fds[i].fd == -1){
+			if (_poll_fds[i].fd == REM){
 				for(size_t j = i; j < _nfds - 1; j++){
 					_poll_fds[j].fd = _poll_fds[j+1].fd;
 				}

@@ -2,8 +2,6 @@
 
 void Server::process_get_request()
 {
-	// std::map<std::string, std::string>::iterator pos = _data->s_fileLocations().find("/Users/ekraujin/Git_repo/shitserv/test_files/");
-	// _http_request["Path"] = pos->first + pos->second;
 	std::fstream file(_http_request["Path"]);
 	std::stringstream ss;
 	std::stringstream ss2;
@@ -152,4 +150,5 @@ void	Server::process_post_request()
 		_response["Connection"] = "Connection: closed\r\n";
 		_err_string = "200";
 		_finished = true;
+		exit(0);
 }

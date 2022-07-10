@@ -142,16 +142,6 @@ std::map<std::string, std::string> http_table(void)
 	return http;
 }
 
-void	Server::squeeze_client_vect(int to_find)
-{
-	for (std::vector<int>::iterator it = _clients.begin(); it !=  _clients.end() ; it++){
-		if (*it == to_find){
-			_clients.erase(it);
-			return ;
-		}
-	}
-}
-
 void *get_in_addr(struct sockaddr *sa)
 {
 	if (sa->sa_family == AF_INET)
