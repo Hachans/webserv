@@ -60,7 +60,6 @@ void	Server::process_post_request()
 			_storage_data = _storage_data.substr(0, pos2);
 			_finished = true;
 			start = true;
-			std::cout << "bruh" << std::endl;
 		}
 	}
 	else
@@ -150,5 +149,5 @@ void	Server::process_post_request()
 
 		_response["Connection"] = "Connection: closed\r\n";
 		_err_string = "200";
-		_finished == true;
+		_finished = true;
 }
