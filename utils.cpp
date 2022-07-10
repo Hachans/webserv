@@ -142,22 +142,6 @@ std::map<std::string, std::string> http_table(void)
 	return http;
 }
 
-void	Server::squeeze_poll()
-{
-	if (_remove_poll){
-		_remove_poll = false;
-		for (size_t i = 0; i < _nfds; i++){
-			if (_poll_fds[i].fd == -1){
-				for(size_t j = i; j < _nfds - 1; j++){
-					_poll_fds[j].fd = _poll_fds[j+1].fd;
-				}
-				i--;
-				_nfds--;
-			}
-		}
-	}
-}
-
 void	Server::squeeze_client_vect(int to_find)
 {
 	for (std::vector<int>::iterator it = _clients.begin(); it !=  _clients.end() ; it++){
@@ -165,15 +149,6 @@ void	Server::squeeze_client_vect(int to_find)
 			_clients.erase(it);
 			return ;
 		}
-	}
-}
-
-void Server::addToPollFds(std::vector<int>& vect_client, size_t old_size){
-	for(size_t i = old_size; i < vect_client.size(); i++){
-		_poll_fds[_nfds].fd = vect_client[i];
-		_poll_fds[_nfds].events = POLLIN;
-		_poll_fds[_nfds].revents = 0;
-		_nfds++;
 	}
 }
 

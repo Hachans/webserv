@@ -2,6 +2,8 @@
 
 void Server::process_get_request()
 {
+	// std::map<std::string, std::string>::iterator pos = _data->s_fileLocations().find("/Users/ekraujin/Git_repo/shitserv/test_files/");
+	// _http_request["Path"] = pos->first + pos->second;
 	std::fstream file(_http_request["Path"]);
 	std::stringstream ss;
 	std::stringstream ss2;

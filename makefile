@@ -6,7 +6,7 @@
 #    By: ekraujin <ekraujin@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2021/05/21 14:41:30 by mchatzip          #+#    #+#              #
-#    Updated: 2022/07/05 11:40:50 by ekraujin         ###   ########.fr        #
+#    Updated: 2022/07/10 19:19:34 by ekraujin         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -17,7 +17,7 @@ RM		= rm -f
 
 NAME	= webserv
 
-SRC		= main.cpp error_page.cpp utils.cpp handlers.cpp server.cpp
+SRC		= main.cpp error_page.cpp utils.cpp handlers.cpp server.cpp config.cpp socket.cpp
 
 OBJ		= ${SRC:.c=.o}
 
