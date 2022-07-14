@@ -59,11 +59,13 @@ class Server{
 
 		void	accept_connections();
 		void	check_values();
+		void	storePostData();
 
 		void	setup_err(int err, const char *msg);
 		void	parse_first_line(std::string line);
 		void	parse_header(char* line);
 		void	squeeze_client_vect(int to_find);
+		void	setBodyGet(std::string err_str);
 
 		bool	handle_existing_connection(struct pollfd *poll);
 

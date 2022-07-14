@@ -1,5 +1,4 @@
 #include "server.hpp"
-#include <dirent.h>
 
 void Server::process_get_request()
 {
@@ -16,11 +15,12 @@ void Server::process_get_request()
 	_response["Date"] += "\r\n";
 	if (!file && _err_string == "200")
 		_err_string = "404";
+	
 	if (_err_string != "200")
 	{
 		_response["Header"] = _http_request["Version"] + " " + _err_string + " " + _http_table[_err_string];
 		_response["Server"] = "Server: Webserv\r\n";
-		_response["Body"] = generate_html(_err_string);
+		setBodyGet(_err_string);
 		ss2 << _response["Body"].length();
 		_response["Content-Length"] = "Content-Length: " + ss2.str() + "\r\n";
 		_response["Content-Type"] = "Content-Type: " + _mime_types[".html"];
@@ -45,28 +45,7 @@ void Server::process_get_request()
 
 void	Server::process_post_request()
 {
-	int pos = (int)std::string::npos;
-	int pos2 = (int)std::string::npos;
-	static bool start = true;
-	if((pos = _storage.find("--" + _http_request["Boundary"])) != (int)std::string::npos){
-		if (start == true)
-		{
-			_storage = _storage.substr(pos + _http_request["Boundary"].length() + 3);
-			start = false;
-		}
-		if ((pos = _storage.find("\r\n\r\n")) != (int)std::string::npos)
-			_storage_data = _storage.substr(pos + 4);
-		else
-			_storage_data += _storage;
-		if((pos2 = _storage_data.find("--" + _http_request["Boundary"] + "--")) != (int)std::string::npos)
-		{
-			_storage_data = _storage_data.substr(0, pos2);
-			_finished = true;
-			start = true;
-		}
-	}
-	else
-		_storage_data += _storage;
+	storePostData();
 
 	if(_finished == true){
 		std::stringstream len;
@@ -153,5 +132,49 @@ void	Server::process_post_request()
 		_response["Connection"] = "Connection: closed\r\n";
 		_err_string = "200";
 		_finished = true;
-		exit(0);
+}
+
+void Server::setBodyGet(std::string err_str){
+
+	std::stringstream ss;
+	std::stringstream code_str(err_str);
+	size_t code;
+	code_str >> code;
+	std::string page = _data->findErrorPage(code);
+
+	std::fstream file2(page);
+		
+	if(file2.is_open()){
+		std::cout << page << std::endl;
+		ss << file2.rdbuf();
+		_response["Body"] = ss.str();
+		file2.close();
+	}
+	else
+		_response["Body"] = generate_html(err_str);
+}
+
+void Server::storePostData(){
+	int pos = (int)std::string::npos;
+	int pos2 = (int)std::string::npos;
+	static bool start = true;
+	if((pos = _storage.find("--" + _http_request["Boundary"])) != (int)std::string::npos){
+		if (start == true)
+		{
+			_storage = _storage.substr(pos + _http_request["Boundary"].length() + 3);
+			start = false;
+		}
+		if ((pos = _storage.find("\r\n\r\n")) != (int)std::string::npos)
+			_storage_data = _storage.substr(pos + 4);
+		else
+			_storage_data += _storage;
+		if((pos2 = _storage_data.find("--" + _http_request["Boundary"] + "--")) != (int)std::string::npos)
+		{
+			_storage_data = _storage_data.substr(0, pos2);
+			_finished = true;
+			start = true;
+		}
+	}
+	else
+		_storage_data += _storage;
 }

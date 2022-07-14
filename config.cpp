@@ -199,7 +199,7 @@ std::vector<conf_data*> *readConfFile(t_gconf *gconf, std::string const &file = 
 									j += 3;
 									codes.push_back(c);
 								}
-								else if(isalpha(line[j])){
+								else if(!isdigit(line[j]) && !isspace(line[j])){
 									std::string temp(&line[j]);
 									removeDuplWhitespace(temp);
 									if (temp.find_first_of(' ') != temp.npos)
