@@ -1,6 +1,6 @@
 #include "server.hpp"
 
-Server::Server(conf_data *data) : _port(PORT), _err(false), _finished(false), _data(data){
+Server::Server(conf_data *data) : _port(PORT), _err(false), _finished(false), _data(data), _dir(false){
 
 }
 

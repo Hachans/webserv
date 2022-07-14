@@ -19,6 +19,7 @@
 #include <fstream>
 #include <iterator>
 #include <ctime>
+#include <dirent.h>
 
 #include "config.hpp"
 #include "defines.hpp"
@@ -46,6 +47,7 @@ class Server{
 	bool								_finished;
 	std::string							_storage_data;
 	conf_data							*_data;
+	bool								_dir;
 	
 
 
@@ -87,6 +89,8 @@ class Server{
 		void	store_data();
 		bool	end_reached();
 		conf_data *get_data(){ return _data; }
+
+		void	displayFiles();
 
 };
 
