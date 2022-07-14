@@ -1,10 +1,11 @@
 #include "server.hpp"
+#include <dirent.h>
 
 void Server::process_get_request()
 {
-	std::fstream file(_http_request["Path"]);
 	std::stringstream ss;
 	std::stringstream ss2;
+	std::fstream file(_data->fileLocationParser(_http_request["Path"]));
 
 	char buf[1000];
 	time_t now = time(0);
@@ -26,7 +27,9 @@ void Server::process_get_request()
 	}
 	else
 	{
-		ss << file.rdbuf();
+		if(ss.str().length() == 0)
+			ss << file.rdbuf();
+		file.close();
 		_response["Header"] = _http_request["Version"] + " 200 " + _http_table["200"];
 		_response["Server"] = "Server: Webserv\r\n";
 		_response["Body"] = ss.str();

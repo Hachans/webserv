@@ -311,7 +311,10 @@ class conf_data{
 		size_t port;//
 		std::pair<size_t, std::string> redir_url;
 		std::vector<std::string> listing;
+		std::string const empty_string;
 	public:
+
+		std::string full_file_path;
 
 		conf_data() :server_names("EKM_amazing_server"), root("root"), host("localhost"), port(4242){}
 		conf_data(conf_data const & other){
@@ -422,6 +425,62 @@ class conf_data{
 				std::cout << f_magenta << "\tpath: " << f_green << i->first
 						  << f_magenta << " answer file(s): " << f_green << i->second << reset << std::endl;
 			std::cout << std::endl;
+		}
+
+		/* Searches file_locations map for "file". If file exists, full_file_path is set to the path to the file, as set in the configuration file,
+			and a reference to it is returned. If it does not exist, full_file_path is set to "file" and a reference to it is returned. */
+		std::string &fileLocationParser(std::string const &file) {
+			std::map<std::string, std::string>::const_iterator it;
+			std::string token;
+			for (it = file_locations.begin(); it != file_locations.end(); ++it){
+				std::string buff(it->second);
+				size_t pos = 0;
+				 while ((pos = buff.find(' ')) != buff.npos){
+					 token = buff.substr(0, pos);
+					 if (token == file)
+					 	return full_file_path = it->first + token;
+					buff.erase(0, pos + 1);
+				 }
+				 if (buff == file)
+				 	return full_file_path = it->first + buff;
+			}
+			return full_file_path = file;
+		}
+		/* Returns the error page path, matching a specific error code. An exception is thrown if the error code is invalid. If no path is specifed in the .conf file,
+			returns a reference to an empty string instead */
+		std::string const &findErrorPage(size_t error_code){
+			if (!isInBounds<size_t>(error_code, 100, 103) && !isInBounds<size_t>(error_code, 200, 208) && !isInBounds<size_t>(error_code, 300, 308)
+				&& !isInBounds<size_t>(error_code, 400, 451) && !isInBounds<size_t>(error_code, 500, 511))
+				throw std::invalid_argument("invalid error code");
+			std::map<size_t, std::string>::const_iterator it;
+			if ((it = error_pages.find(error_code)) != error_pages.end())
+				return it->second;
+			return empty_string;
+		}
+		/* Returns a reference to the filepath of the 1st file specified under the "index" label in a "location" block. Subsequent calls
+			with the same filepath will return any additional files provided under the "index" label or an empty string after the call to the last file.
+			Optional argument "reset": if set to true, resets the function's tracking of the specific filepath. NOTE: The function call with the reset set
+			to true counts as the 1st call */
+		std::string &findDefaultAnswerToFilepath(std::string const &filepath, bool reset = false){
+			std::map<std::string, std::string>::const_iterator it;
+			static std::string filepath_buff(filepath);
+
+			if ((it = def_answer_if_dir.find(filepath)) != def_answer_if_dir.end()){
+				static std::string buff(it->second);
+				if (filepath_buff != filepath || reset == true){
+					filepath_buff = filepath;
+					buff = it->second;
+				}
+				size_t pos = buff.find(' ');
+				std::string token = buff.substr(0, pos);
+				buff.erase(0, pos + 1);
+				if (buff == "")
+					return full_file_path = "";
+				if (buff == token)
+					buff.clear();
+				return full_file_path = it->first + token;
+			}
+			return full_file_path = "";
 		}
 
 	friend std::vector<conf_data*> *readConfFile(t_gconf *gconf, std::string const &file);

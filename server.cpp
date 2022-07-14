@@ -19,19 +19,21 @@ void	Server::setup_serv(){
 	try{
 		_err_string = "200";
 		_serv_fd = socket(AF_INET, SOCK_STREAM, 0);
-		setup_err(_serv_fd, "error creating socket");
+		setup_err(_serv_fd, "error socket()");
 		ret = setsockopt(_serv_fd, SOL_SOCKET, SO_REUSEADDR, (char*)&opt, sizeof(opt));
-		setup_err(ret, "error set socket");
+		setup_err(ret, "error setsockopt()");
 		ret = fcntl(_serv_fd, F_SETFL, O_NONBLOCK);
-		setup_err(ret, "error fcntl");
+		setup_err(ret, "error fcntl()");
 		_address.sin_family = AF_INET;
 		memset(&_address.sin_zero, 0, sizeof(_address.sin_zero));
 		_address.sin_addr.s_addr = INADDR_ANY;
 		_address.sin_port = htons(_port);
+		if(_data->s_host() != "localhost")
+			_address.sin_addr.s_addr = inet_addr(_data->s_host().c_str());
 		ret = bind(_serv_fd, (struct sockaddr *)&_address, sizeof(_address));
-		setup_err(ret, "error binding");
+		setup_err(ret, "error bind()");
 		_listen_fd = listen(_serv_fd, SIZE_POLLFD);
-		setup_err(_listen_fd, "Error function  the listening");
+		setup_err(_listen_fd, "error listen()");
 		_http_table = http_table();
 		_mime_types = initialize_mime_types();
 	}
@@ -98,11 +100,12 @@ bool	Server::handle_existing_connection(struct pollfd *poll){
 
 
 void Server::process_request(){
-	if(_http_request["Type"] == "GET")
+	size_t pos;
+	if(_http_request["Type"] == "GET" && (pos = _data->s_methods().find("GET") != std::string::npos))
 		process_get_request();
-	else if (_http_request["Type"] == "POST")
+	else if (_http_request["Type"] == "POST" && (pos = _data->s_methods().find("POST") != std::string::npos))
 		process_post_request();
-	else if(_http_request["Type"] == "DELETE")
+	else if(_http_request["Type"] == "DELETE" && (pos = _data->s_methods().find("DELETE") != std::string::npos))
 		process_delete_request();
 	else if(_http_request["Type"] == "HEAD" || _http_request["Type"] == "PUT" || _http_request["Type"] == "CONNECT" || _http_request["Type"] == "TRACE" || _http_request["Type"] == "PATCH" || _http_request["Type"] == "OPTIONS")
 	{
@@ -110,7 +113,10 @@ void Server::process_request(){
 		process_get_request();
 	}
 	else{
-		_err_string = "400";
+		if((pos = _data->s_methods().find("Type")) == std::string::npos)
+			_err_string = "401";
+		else
+			_err_string = "400";
 		process_get_request();
 	}
 }

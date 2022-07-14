@@ -36,7 +36,7 @@ void	Socket::run_serv(){
 			if(ret < 0)
 				throw("error poll()");
 			if(ret == 0)
-				throw("poll() time out");
+				throw("time out poll()");
 			for(size_t i = 0; i < _nfds ; i++){
 				if(_poll_fds[i].revents == 0)
 					continue;
@@ -76,7 +76,7 @@ void	Socket::displayAvailableServer()
 {
 	std::cout << "\nAvailable servers:" << std::endl << std::endl;
 	for (std::list<Server>::iterator it = _server_list.begin(); it != _server_list.end(); it++)
-		std::cout << "server =" << it->get_server_fd() << "= port =" << it->getPort() << "="  << std::endl;
+		std::cout << "Server: " << it->get_server_fd() << " - " << it->get_data()->s_host() << ":" << it->getPort() << std::endl;
 	std::cout << "\n" << std::endl;
 }
 
