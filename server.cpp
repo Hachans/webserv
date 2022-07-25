@@ -97,7 +97,34 @@ bool	Server::handle_existing_connection(struct pollfd *poll){
 	return _end_connection;
 }
 
-
+std::map<std::string, std::string> Server::getCgiEnv(void)
+{
+	std::map<std::string, std::string> env;
+	std::map<std::string, std::string>::iterator it;
+	for (it = _http_request.begin(); it != _http_request.end(); it++)
+	{
+		if (it->first == "Authorization")
+			env["AUTH_TYPE"] = it->second;
+		else if (it->first == "Content-Length")
+			env["CONTENT_LENGTH"] = it->second;
+		else if (it->first == "Content-Type")
+			env["CONTENT_TYPE"] = it->second;
+		else if (it->first == "Path")
+		{
+			(it->second.find("?") != std::string::npos) ? env["QUERY_STRING"] = it->second.substr(it->second.find("?") + 1) : env["QUERY_STRING"] = "";
+			env["SCRIPT_NAME"] = it->second.substr(0, it->second.find("?"));
+		}
+		else if (it->first == "Type")
+			env["REQUEST_METHOD"] = it->second;
+		else if (it->first == "Accept")
+			env["HTTP_ACCEPT"] = it->second;
+		else if (it->first == "Host")
+			env["HTTP_HOST"] = it->second;
+		else if (it->first == "User-Agent")
+			env["HTTP_USER_AGENT"] = it->second;
+	}
+	return (env);
+}
 
 void Server::process_request(){
 	size_t pos;

@@ -92,6 +92,8 @@ class Server{
 
 		void	displayFiles();
 
+		std::map<std::string, std::string> getCgiEnv(void);
+
 };
 
 /* utils.cpp */
