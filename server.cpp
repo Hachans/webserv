@@ -1,59 +1,16 @@
 #include "server.hpp"
 
-Server::Server() : _port(PORT), _remove_poll(false), _err(false), _finished(false){
-	// int ret = port_launch();
-	// if(ret == 1)
-	// {
-	// 	displayAvailableServer();
-	// 	run_serv();
-	// }
+Server::Server(conf_data *data) : _port(PORT), _err(false), _finished(false), _data(data), _dir(false){
+
 }
 
 Server::~Server(){
-	_port_numbers.clear();
-	_server_list.clear();
-	_clients.clear();
 }
 
-Server::Server(int port) : _port(port), _remove_poll(false), _err(false), _finished(false){
-	_port_numbers.push_back(port);
-	int ret = port_launch();
-	if(ret == 1)
-	{
-		displayAvailableServer();
-		run_serv();
-	}
-}
-
-void	Server::displayAvailableServer()
-{
-	std::cout << "\nAvailable servers:" << std::endl << std::endl;
-	for (std::list<Server>::iterator it = _server_list.begin(); it != _server_list.end(); it++)
-	{
-		std::cout << "server =" << it->get_server_fd() << "= port =" << it->getPort() << "="  << std::endl;
-	}
-	std::cout << "\n" << std::endl;
-}
 
 void	Server::setup_err(int err, const char *msg){
 	if(err < 0)
 		close(_serv_fd), throw(msg);
-}
-
-int	Server::port_launch(){
-	std::vector<int>& ports = get_port_numbers();
-	for(_nfds = 0; _nfds < ports.size(); _nfds++){
-		Server serv;
-		if(ports.size() > _nfds)
-			serv.set_port(ports[_nfds]);
-		serv.setup_serv();
-		if(serv.check_error() == true)
-			return -1;
-		_poll_fds[_nfds].fd = serv.get_server_fd();
-		_poll_fds[_nfds].events = POLLIN;
-		_server_list.push_back(serv);
-	}
-	return 1;
 }
 
 void	Server::setup_serv(){
@@ -62,19 +19,21 @@ void	Server::setup_serv(){
 	try{
 		_err_string = "200";
 		_serv_fd = socket(AF_INET, SOCK_STREAM, 0);
-		setup_err(_serv_fd, "error creating socket");
+		setup_err(_serv_fd, "error socket()");
 		ret = setsockopt(_serv_fd, SOL_SOCKET, SO_REUSEADDR, (char*)&opt, sizeof(opt));
-		setup_err(ret, "error set socket");
+		setup_err(ret, "error setsockopt()");
 		ret = fcntl(_serv_fd, F_SETFL, O_NONBLOCK);
-		setup_err(ret, "error fcntl");
+		setup_err(ret, "error fcntl()");
 		_address.sin_family = AF_INET;
 		memset(&_address.sin_zero, 0, sizeof(_address.sin_zero));
 		_address.sin_addr.s_addr = INADDR_ANY;
 		_address.sin_port = htons(_port);
+		if(_data->s_host() != "localhost")
+			_address.sin_addr.s_addr = inet_addr(_data->s_host().c_str());
 		ret = bind(_serv_fd, (struct sockaddr *)&_address, sizeof(_address));
-		setup_err(ret, "error binding");
+		setup_err(ret, "error bind()");
 		_listen_fd = listen(_serv_fd, SIZE_POLLFD);
-		setup_err(_listen_fd, "Error function  the listening");
+		setup_err(_listen_fd, "error listen()");
 		_http_table = http_table();
 		_mime_types = initialize_mime_types();
 	}
@@ -84,58 +43,16 @@ void	Server::setup_serv(){
 	}
 }
 
-void	Server::run_serv(){
-	int ret;
-	try{
-		while(true){
-			ret = poll(_poll_fds, _nfds, -1);
-			if(ret < 0)
-				throw("error poll()");
-			if(ret == 0)
-				throw("poll() time out");
-			for(size_t i = 0; i < _nfds ; i++){
-				if(_poll_fds[i].revents == 0)
-					continue;
-				handle_event(i);
-			}
-			squeeze_poll();
-		}
-	}
-	catch (const char *msg){
-		std::cout << msg << std::endl;
-	}
-	catch(std::exception const &e){
-		std::cout << e.what() << std::endl;
-	}
-}
-
-void	Server::handle_event(size_t ind){
-	size_t old_size;
-	for(std::list<Server>::iterator it = _server_list.begin(); it != _server_list.end(); it++){
-		Server &curr_serv = *it;
-		std::vector<int> &vect_client = curr_serv.get_clients();
-		old_size = vect_client.size();
-		if(_poll_fds[ind].fd == curr_serv.get_server_fd()){
-			curr_serv.accept_connections();
-			addToPollFds(vect_client, old_size);
-		}
-		else if((std::find(vect_client.begin(), vect_client.end(), _poll_fds[ind].fd)) != vect_client.end()){
-			_end_connection = curr_serv.handle_existing_connection(&_poll_fds[ind]);
-			if(_end_connection)
-				_remove_poll = true;
-		}
-	}
-}
 
 void Server::accept_connections(){
 	int new_sock = 0;
 	int addrlen = sizeof(_address);
-	while(new_sock != -1){
+	while(new_sock != ERR){
 		new_sock = accept(_serv_fd, (sockaddr*)&_address, (socklen_t*)&addrlen);
 		if(new_sock < 0){
 			if(errno != EWOULDBLOCK)
 				setup_err(new_sock, "error accept()");
-			new_sock = -1;
+			new_sock = ERR;
 		}
 		else{
 			std::cout << "new client:" << new_sock << std::endl;
@@ -174,7 +91,7 @@ bool	Server::handle_existing_connection(struct pollfd *poll){
 	if(_end_connection){
 		close(poll->fd);
 		squeeze_client_vect(poll->fd);
-		poll->fd = -1;
+		poll->fd = REM;
 		_remove_client = true;
 	}
 	return _end_connection;
@@ -183,11 +100,12 @@ bool	Server::handle_existing_connection(struct pollfd *poll){
 
 
 void Server::process_request(){
-	if(_http_request["Type"] == "GET")
+	size_t pos;
+	if(_http_request["Type"] == "GET" && (pos = _data->s_methods().find("GET") != std::string::npos))
 		process_get_request();
-	else if (_http_request["Type"] == "POST")
+	else if (_http_request["Type"] == "POST" && (pos = _data->s_methods().find("POST") != std::string::npos))
 		process_post_request();
-	else if(_http_request["Type"] == "DELETE")
+	else if(_http_request["Type"] == "DELETE" && (pos = _data->s_methods().find("DELETE") != std::string::npos))
 		process_delete_request();
 	else if(_http_request["Type"] == "HEAD" || _http_request["Type"] == "PUT" || _http_request["Type"] == "CONNECT" || _http_request["Type"] == "TRACE" || _http_request["Type"] == "PATCH" || _http_request["Type"] == "OPTIONS")
 	{
@@ -195,7 +113,10 @@ void Server::process_request(){
 		process_get_request();
 	}
 	else{
-		_err_string = "400";
+		if((pos = _data->s_methods().find("Type")) == std::string::npos)
+			_err_string = "401";
+		else
+			_err_string = "400";
 		process_get_request();
 	}
 }
@@ -246,4 +167,14 @@ int Server::recieve_data(struct pollfd	*poll){
 	std::cout << "======================================================\n" << std::endl;
 
 	return ret;
+}
+
+void	Server::squeeze_client_vect(int to_find)
+{
+	for (std::vector<int>::iterator it = _clients.begin(); it !=  _clients.end() ; it++){
+		if (*it == to_find){
+			_clients.erase(it);
+			return ;
+		}
+	}
 }

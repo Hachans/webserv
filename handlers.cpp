@@ -2,9 +2,9 @@
 
 void Server::process_get_request()
 {
-	std::fstream file(_http_request["Path"]);
 	std::stringstream ss;
 	std::stringstream ss2;
+	std::fstream file(_data->fileLocationParser(_http_request["Path"]));
 
 	char buf[1000];
 	time_t now = time(0);
@@ -15,20 +15,25 @@ void Server::process_get_request()
 	_response["Date"] += "\r\n";
 	if (!file && _err_string == "200")
 		_err_string = "404";
+	displayFiles();
 	if (_err_string != "200")
 	{
 		_response["Header"] = _http_request["Version"] + " " + _err_string + " " + _http_table[_err_string];
 		_response["Server"] = "Server: Webserv\r\n";
-		_response["Body"] = generate_html(_err_string);
+		if(_dir == false)
+			setBodyGet(_err_string);
 		ss2 << _response["Body"].length();
 		_response["Content-Length"] = "Content-Length: " + ss2.str() + "\r\n";
 		_response["Content-Type"] = "Content-Type: " + _mime_types[".html"];
 	}
 	else
 	{
+
 		ss << file.rdbuf();
+		file.close();
 		_response["Header"] = _http_request["Version"] + " 200 " + _http_table["200"];
 		_response["Server"] = "Server: Webserv\r\n";
+		// if(_dir == false){
 		_response["Body"] = ss.str();
 		_file_size = _response["Body"].length();
 		ss2 << _response["Body"].length();
@@ -38,32 +43,12 @@ void Server::process_get_request()
 	_response["Connection"] = "Connection: closed\r\n";
 	_err_string = "200";
 	_finished = true;
+	_dir = false;
 }
 
 void	Server::process_post_request()
 {
-	int pos = (int)std::string::npos;
-	int pos2 = (int)std::string::npos;
-	static bool start = true;
-	if((pos = _storage.find("--" + _http_request["Boundary"])) != (int)std::string::npos){
-		if (start == true)
-		{
-			_storage = _storage.substr(pos + _http_request["Boundary"].length() + 3);
-			start = false;
-		}
-		if ((pos = _storage.find("\r\n\r\n")) != (int)std::string::npos)
-			_storage_data = _storage.substr(pos + 4);
-		else
-			_storage_data += _storage;
-		if((pos2 = _storage_data.find("--" + _http_request["Boundary"] + "--")) != (int)std::string::npos)
-		{
-			_storage_data = _storage_data.substr(0, pos2);
-			_finished = true;
-			start = true;
-		}
-	}
-	else
-		_storage_data += _storage;
+	storePostData();
 
 	if(_finished == true){
 		std::stringstream len;
@@ -149,5 +134,91 @@ void	Server::process_post_request()
 
 		_response["Connection"] = "Connection: closed\r\n";
 		_err_string = "200";
-		_finished == true;
+		_finished = true;
 }
+
+void Server::setBodyGet(std::string err_str){
+
+	std::stringstream ss;
+	std::stringstream code_str(err_str);
+	size_t code;
+	code_str >> code;
+	std::string page = _data->findErrorPage(code);
+
+	std::fstream file2(page);
+		
+	if(file2.is_open()){
+		ss << file2.rdbuf();
+		_response["Body"] = ss.str();
+		file2.close();
+	}
+	else
+		_response["Body"] = generate_html(err_str);
+}
+
+void Server::storePostData(){
+	int pos = (int)std::string::npos;
+	int pos2 = (int)std::string::npos;
+	static bool start = true;
+	if((pos = _storage.find("--" + _http_request["Boundary"])) != (int)std::string::npos){
+		if (start == true)
+		{
+			_storage = _storage.substr(pos + _http_request["Boundary"].length() + 3);
+			start = false;
+		}
+		if ((pos = _storage.find("\r\n\r\n")) != (int)std::string::npos)
+			_storage_data = _storage.substr(pos + 4);
+		else
+			_storage_data += _storage;
+		if((pos2 = _storage_data.find("--" + _http_request["Boundary"] + "--")) != (int)std::string::npos)
+		{
+			_storage_data = _storage_data.substr(0, pos2);
+			_finished = true;
+			start = true;
+		}
+	}
+	else
+		_storage_data += _storage;
+}
+
+void Server::displayFiles(){
+
+	std::cout << _http_request["Path"] << std::endl;
+
+	char buff[254];
+	for(std::vector<std::string>::const_iterator it = _data->s_listing().begin(); it != _data->s_listing().end(); ++it){
+		if(((*it).compare(_http_request["Path"])) == 0)
+			goto a;
+		strcpy(buff, (*it).c_str());
+		char* token = strtok(buff, "/");
+		while(token){
+			if(!strcmp(token, _http_request["Path"].c_str()))
+				goto a;
+			token = strtok(NULL, "/");
+		}
+	}
+	return;
+
+
+a:	struct stat buffer;
+	stat(_http_request["Path"].c_str(), &buffer);
+	if(S_ISDIR(buffer.st_mode)){
+		DIR *dir;
+		struct dirent *ent;
+		if ((dir = opendir(_http_request["Path"].c_str())) != NULL){
+			_response["Body"] = "<!DOCTYPE html><html><body>";
+			while ((ent = readdir(dir)) != NULL){
+				_response["Body"] += "<a href=\"/" + _http_request["Path"] + "/";
+				_response["Body"] += ent->d_name;
+				_response["Body"] += "\">";
+				_response["Body"] += ent->d_name;
+				_response["Body"] += "</a><br>";
+			}
+			closedir(dir);
+			_response["Body"] += "</body></html>";
+			_dir = true;
+		}
+		else _err_string = "401";
+	}
+}
+
