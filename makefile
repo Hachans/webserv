@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: ekraujin <ekraujin@student.42.fr>          +#+  +:+       +#+         #
+#    By: kpucylo <kpucylo@student.42wolfsburg.de    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2021/05/21 14:41:30 by mchatzip          #+#    #+#              #
-#    Updated: 2022/07/10 19:19:34 by ekraujin         ###   ########.fr        #
+#    Updated: 2022/07/26 16:52:32 by kpucylo          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -17,7 +17,7 @@ RM		= rm -f
 
 NAME	= webserv
 
-SRC		= main.cpp error_page.cpp utils.cpp handlers.cpp server.cpp config.cpp socket.cpp
+SRC		= main.cpp error_page.cpp utils.cpp handlers.cpp server.cpp config.cpp socket.cpp CGI.cpp
 
 OBJ		= ${SRC:.c=.o}
 

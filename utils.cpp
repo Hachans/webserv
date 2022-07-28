@@ -169,10 +169,26 @@ void	Server::parse_first_line(std::string line){
 	_http_request["Version"] = line.substr(lpos, (pos - lpos) - 1);
 
 	pos = _http_request["Path"].find('.');
-	if(pos == std::string::npos && _err_string == "200" && _http_request["Type"] == "GET")
+	_is_cgi = false;
+	if(pos == std::string::npos && _err_string == "200" && _http_request["Type"] == "GET" && !_is_cgi)
 		_err_string = "415";
 	else if (pos != std::string::npos)
-		_http_request["Extention"] = _http_request["Path"].substr(pos, _http_request["Path"].length() - pos);
+	{
+		if (_http_request["Path"].find("?") == std::string::npos)
+			_http_request["Extention"] = _http_request["Path"].substr(pos, _http_request["Path"].length() - pos);
+		else
+		{
+			std::string temp = _http_request["Path"].substr(0, _http_request["Path"].find("?"));
+			_http_request["Extention"] = temp.substr(pos, temp.length() - pos);
+		}
+		for (std::vector<std::string>::iterator it = _cgi_types.begin(); it != _cgi_types.end(); it++)
+		{
+			if (*it == _http_request["Extention"])
+				_is_cgi = true;
+		}
+		if (_mime_types[_http_request["Extention"]] == "" && !_is_cgi)
+			_err_string = "415";
+	}
 }
 
 void Server::parse_header(char* buff){

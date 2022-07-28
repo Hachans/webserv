@@ -98,6 +98,7 @@ std::vector<conf_data*> *readConfFile(t_gconf *gconf, std::string const &file = 
 		bool host;
 		bool methods;
 		bool redir;
+		bool CGI;
 	} doubles;
 
 	std::ifstream f(file, std::ifstream::in);
@@ -139,7 +140,7 @@ std::vector<conf_data*> *readConfFile(t_gconf *gconf, std::string const &file = 
 			std::vector<conf_data*>::iterator it= --co->end();
 			f.getline(line, 10000, '}');
 			std::stringstream content(line);
-			std::string const rules[9] = {"server_names", "port", "error_page", "root", "host", "allowed_methods", "return", "location", ""};
+			std::string const rules[10] = {"server_names", "port", "error_page", "root", "host", "allowed_methods", "return", "location", "CGI", ""};
 
 			while (!content.eof())
 			{
@@ -147,7 +148,7 @@ std::vector<conf_data*> *readConfFile(t_gconf *gconf, std::string const &file = 
 				std::string li_ne(line);
 				li_ne.erase(remove_if(li_ne.begin(), li_ne.end(), isspace), li_ne.end());
 				int pos = 0;
-				for (size_t i = 0; i < 9; ++i)
+				for (size_t i = 0; i < 10; ++i)
 				{
 					if (li_ne == rules[i]){
 						pos = i + 1;
@@ -341,6 +342,13 @@ std::vector<conf_data*> *readConfFile(t_gconf *gconf, std::string const &file = 
 						}
 						break;
 					case 9:
+						content.getline(line, 10000, ';');
+						li_ne = line;
+						if (content.eof())
+								throw std::invalid_argument("no ';' found");
+						(*it)->CGI_extensions = removeDuplWhitespace(li_ne);
+						break;
+					case 10:
 						break;
 					default:
 						throw std::invalid_argument("invalid rule: " + li_ne);

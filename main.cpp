@@ -1,10 +1,12 @@
 #include "server.hpp"
 #include "socket.hpp"
 
+t_gconf *gconf;
+
 int main(int argc, char *argv[])
 {
 	std::vector<conf_data*> *co;
-	t_gconf *gconf = new t_gconf;
+	gconf = new t_gconf;
 	gconf->error_pages = new std::map<size_t, std::string>();
 	gconf->CGI = new std::map<std::string, std::string>();
 

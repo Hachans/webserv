@@ -40,14 +40,17 @@ class Server{
 	std::map<std::string, std::string>	_response;
 	std::map<std::string, std::string>	_http_table;
 	std::map<std::string, std::string>	_mime_types;
+	std::vector<std::string>	 		_cgi_types;
 	int									_file_size;
 	int									_file_offset;
 	std::string							_err_string;
 	std::string							_storage;
 	bool								_finished;
 	std::string							_storage_data;
+	std::string							_cgi_response;
 	conf_data							*_data;
 	bool								_dir;
+	bool								_is_cgi;
 	
 
 

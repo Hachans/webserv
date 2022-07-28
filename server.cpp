@@ -1,7 +1,18 @@
 #include "server.hpp"
 
-Server::Server(conf_data *data) : _port(PORT), _err(false), _finished(false), _data(data), _dir(false){
+//TODO: fix what marked as fuckeda
 
+Server::Server(conf_data *data) : _port(PORT), _err(false), _finished(false), _data(data), _dir(false){
+	size_t j;
+	std::string str = _data->CGI_extensions;
+	while (_data->CGI_extensions != "")
+	{
+		j = str.find(" ");
+		_cgi_types.push_back(str.substr(0, j));
+		str.erase(0, j+1);
+		if (j == std::string::npos)
+			break ;
+	}
 }
 
 Server::~Server(){
@@ -31,7 +42,12 @@ void	Server::setup_serv(){
 		if(_data->s_host() != "localhost")
 			_address.sin_addr.s_addr = inet_addr(_data->s_host().c_str());
 		ret = bind(_serv_fd, (struct sockaddr *)&_address, sizeof(_address));
-		setup_err(ret, "error bind()");
+		// setup_err(ret, "error bind()");
+		if (ret == -1)
+		{
+			perror("bind");
+			close(_serv_fd), throw("bind fucked up");
+		}
 		_listen_fd = listen(_serv_fd, SIZE_POLLFD);
 		setup_err(_listen_fd, "error listen()");
 		_http_table = http_table();
@@ -113,6 +129,7 @@ std::map<std::string, std::string> Server::getCgiEnv(void)
 		{
 			(it->second.find("?") != std::string::npos) ? env["QUERY_STRING"] = it->second.substr(it->second.find("?") + 1) : env["QUERY_STRING"] = "";
 			env["SCRIPT_NAME"] = it->second.substr(0, it->second.find("?"));
+			env["PATH_INFO"] = env["SCRIPT_NAME"];
 		}
 		else if (it->first == "Type")
 			env["REQUEST_METHOD"] = it->second;
@@ -140,10 +157,11 @@ void Server::process_request(){
 		process_get_request();
 	}
 	else{
-		if((pos = _data->s_methods().find("Type")) == std::string::npos)
-			_err_string = "401";
-		else
-			_err_string = "400";
+		// THIS IS FUCKED
+		// if((pos = _data->s_methods().find("Type")) == std::string::npos)
+		// 	_err_string = "401";
+		// else
+		// 	_err_string = "400";
 		process_get_request();
 	}
 }
@@ -152,8 +170,13 @@ void Server::process_request(){
 int	Server::send_response(struct pollfd *poll){
 	static bool status = true;
 	static std::string resp = _response["Header"] + _response["Date"] + _response["Server"] + _response["Content-Type"] + _response["Content-Length"] + _response["Connection"] + "\r\n" + _response["Body"];
-	if(status == false)
+	if(status == false && !_is_cgi)
 		resp = _response["Header"] + _response["Date"] + _response["Server"] + _response["Content-Type"] + _response["Content-Length"] + _response["Connection"] + "\r\n" + _response["Body"];
+	else if (_is_cgi)
+	{
+		resp = _cgi_response;
+		_is_cgi = false;
+	}
 	int rsize = resp.length();
 	int ret = send(poll->fd, resp.c_str(), (BUFFER_SIZE < rsize ? BUFFER_SIZE : rsize), 0);
 	_http_request["Content-Type"] = "";

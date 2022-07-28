@@ -1,10 +1,11 @@
 #include "server.hpp"
+#include "CGI.hpp"
 
 void Server::process_get_request()
 {
 	std::stringstream ss;
 	std::stringstream ss2;
-	std::fstream file(_data->fileLocationParser(_http_request["Path"]));
+	std::fstream file(_data->fileLocationParser(_http_request["Path"]).substr(0, _data->fileLocationParser(_http_request["Path"]).find("?")));
 
 	char buf[1000];
 	time_t now = time(0);
@@ -25,6 +26,16 @@ void Server::process_get_request()
 		ss2 << _response["Body"].length();
 		_response["Content-Length"] = "Content-Length: " + ss2.str() + "\r\n";
 		_response["Content-Type"] = "Content-Type: " + _mime_types[".html"];
+	}
+	else if (_is_cgi)
+	{
+		std::map<std::string, std::string> env = getCgiEnv();
+		CGI cgi(env);
+		cgi.execCGI(env["PATH_INFO"]);
+		std::fstream fs("cgi_out_file");
+		ss << fs.rdbuf();
+		_cgi_response = _http_request["Version"] + " 200 " + _http_table["200"];
+		_cgi_response += ss.str();
 	}
 	else
 	{
@@ -61,6 +72,13 @@ void	Server::process_post_request()
 		_response["Date"] += "\r\n";
 
 		std::string file_name = _http_request["Path"];
+		if (_is_cgi)
+		{
+			std::map<std::string, std::string> env = getCgiEnv();
+			CGI cgi(env);
+			cgi.execCGI(env["PATH_INFO"]);
+			return ;
+		}
 		if(_http_request["Content-Disposition"] != ""){
 			int pos = _http_request["Content-Disposition"].find("filename=") + 10;
 			file_name = _http_request["Content-Disposition"].substr(pos);
@@ -221,4 +239,3 @@ a:	struct stat buffer;
 		else _err_string = "401";
 	}
 }
-

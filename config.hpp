@@ -314,6 +314,7 @@ class conf_data{
 		std::string const empty_string;
 	public:
 
+		std::string CGI_extensions;
 		std::string full_file_path;
 
 		conf_data() :server_names("EKM_amazing_server"), root("root"), host("localhost"), port(4242){}
