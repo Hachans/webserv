@@ -317,7 +317,7 @@ class conf_data{
 		std::string CGI_extensions;
 		std::string full_file_path;
 
-		conf_data() :server_names("EKM_amazing_server"), root("root"), host("localhost"), port(4242){}
+		conf_data() :server_names("EKM_amazing_server"), root(""), host("localhost"), port(4242){}
 		conf_data(conf_data const & other){
 			this->server_names = other.server_names;
 			root = other.root;

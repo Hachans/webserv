@@ -9,11 +9,12 @@ class CGI
 {
 	private:
 		std::map<std::string, std::string> _env;
+		std::string _ret_code;
 	public:
 		CGI(std::map<std::string, std::string> const &env);
 		~CGI();
 
-		int execCGI(std::string const &filePath);
+		std::string const &execCGI(std::string const &filePath);
 };
 
 #endif

@@ -48,9 +48,9 @@ void	Socket::run_serv(){
 	catch (const char *msg){
 		std::cout << msg << std::endl;
 	}
-	catch(std::exception const &e){
-		std::cout << e.what() << std::endl;
-	}
+	// catch(std::exception const &e){
+	// 	std::cout << e.what() << std::endl;
+	// }
 }
 
 

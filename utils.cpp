@@ -1,5 +1,7 @@
 #include "server.hpp"
 
+// TODO: handle non-multipart post requests
+
 std::map<std::string, std::string> initialize_mime_types(void)
 {
 	std::map<std::string, std::string> mime_types;
@@ -201,7 +203,7 @@ void Server::parse_header(char* buff){
 		pos = line.find(": ", 0);
 		if(_http_request["Content-Type"] == "" && line.substr(0, pos) == "Content-Type")
 			_http_request["Content-Type"] = line.substr(pos + 2, line.length() - 1 - pos);
-		else if (line.substr(0, pos) != "Content-Type")
+		else if (line.substr(0, pos) != "Content-Type" && pos != std::string::npos && line != "")
 			_http_request[line.substr(0, pos)] = line.substr(pos + 2, line.length() - 1 - pos);
 
 	}
@@ -211,7 +213,7 @@ void Server::parse_header(char* buff){
 			_http_request["Boundary"] = _http_request["Content-Type"].substr(pos + 9);
 		}
 	}
-	if(_http_request["Type"] == "POST")
+	if(_http_request["Type"] == "POST" && _http_request["Boundary"] != "")
 		_http_request["Boundary"].erase(_http_request["Boundary"].length() - 1, 1);
 }
 

@@ -12,7 +12,7 @@ CGI::~CGI()
 {
 }
 
-int CGI::execCGI(std::string const &filePath){
+std::string const &CGI::execCGI(std::string const &filePath){
 	//Text color modifiers
 	Color::Modifier f_red(Color::Red);
 	Color::Modifier reset(Color::White, 0, 1);
@@ -25,7 +25,8 @@ int CGI::execCGI(std::string const &filePath){
 		if (!filePath.compare(filePath.size() - s, s, exts[i]))
 			break;
 	}
-	if (i == 2){ std::cerr << f_red << filePath  << ": Script type not supported" << reset << std::endl; return 1;} 
+	if (i == 2){ std::cerr << f_red << filePath  << ": Script type not supported" << reset << std::endl;
+		return _ret_code = "415";} 
 
 	//modify PATH_INFO
 	if (!gconf->CGI->count(exts[i])){
@@ -39,13 +40,14 @@ int CGI::execCGI(std::string const &filePath){
 
 	if (!file_exists(filePath)){
 		path_to_use = _env["PATH_TRANSLATED"] + filePath;
-		if (!file_exists(path_to_use)){  std::cerr  << f_red << filePath << ": file not found" << reset << std::endl; return 1; }
+		if (!file_exists(path_to_use)){  std::cerr  << f_red << filePath << ": file not found" << reset << std::endl;
+			return _ret_code = "404"; }
 	}
 
 	//Build env
 	char **env;
 	if ((env = (char**)calloc(_env.size() + 1, sizeof(char*))) == NULL)
-		return 1;
+		return _ret_code = "500";
 	{
 		std::string env_values;
 		size_t l = _env.size();
@@ -62,26 +64,26 @@ int CGI::execCGI(std::string const &filePath){
 	//Open out file
 	int file_fd = open("cgi_out_file", O_CREAT|O_WRONLY|O_TRUNC|O_NONBLOCK, 0777);
 	if (file_fd == -1)
-		return 1;
+		return _ret_code = "500";
 
 	//exec cgi script, print output to cgi_out_file
 	pid_t pid;
 	if ((pid = fork()) == -1){
 		perror("fork: ");
-		return 1;
+		return _ret_code = "500";
 	}
 	if (!pid){
 		if (dup2(file_fd, 1) == -1)
-			return 1;
+			return _ret_code = "500";
 		if (execve(path_to_use.c_str(), NULL, env) == -1)
-			return 1;
+			return _ret_code = "500";
 	}
 	else{
 		int status;
 		if (waitpid(pid, &status, 0) == -1)
-			return 1;
+			return _ret_code = "500";
 		if (WIFEXITED(status) && WEXITSTATUS(status))
-			return 1;
+			return _ret_code = "500";
 		close(file_fd);
 
 		{
@@ -91,7 +93,5 @@ int CGI::execCGI(std::string const &filePath){
 			delete env;
 		}
 	}
-	return 200;
+	return _ret_code = "200";
 }
-
-
