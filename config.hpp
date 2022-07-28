@@ -309,9 +309,9 @@ class conf_data{
 		std::map<std::string, std::string> file_locations;
 		std::map<std::string, std::string> def_answer_if_dir;
 		size_t port;//
-		std::pair<size_t, std::string> redir_url;
 		std::vector<std::string> listing;
 		std::string const empty_string;
+		std::map<std::string, std::string> redir_url;
 	public:
 
 		std::string CGI_extensions;
@@ -334,14 +334,14 @@ class conf_data{
 
 		void clear(){ //reset object to default 
 			server_names = "EKM_amazing_server";
-			root = "root";
+			root = "";
 			host = "localhost";
 			port = 4242;
 			methods.clear();
 			error_pages.clear();
 			file_locations.clear();
 			def_answer_if_dir.clear();
-			redir_url = std::pair<size_t, std::string>(0, "");
+			redir_url.clear();
 			listing.clear();
 		}
 
@@ -387,7 +387,7 @@ class conf_data{
 		std::map<std::string, std::string> const &s_defAnswers() const {
 			return def_answer_if_dir;
 		}
-		std::pair<size_t, std::string> const &s_HTTP_redir() const {
+		std::map<std::string, std::string> const &s_HTTP_redir() const {
 			return this->redir_url;
 		}
 		//////////////////

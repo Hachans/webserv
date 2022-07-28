@@ -1,5 +1,26 @@
 #include "config.hpp"
 
+static inline bool is_file (const std::string& name) {
+  struct stat buffer;
+  return (stat(name.c_str(), &buffer) == 0 && !S_ISDIR(buffer.st_mode)); 
+}
+
+static int nthOccurrence(const std::string& str, const std::string& findMe, int nth)
+{
+	size_t  pos = 0;
+	int     cnt = 0;
+
+	while( cnt != nth )
+	{
+		pos+=1;
+		pos = str.find(findMe, pos);
+		if ( pos == std::string::npos )
+			return -1;
+		cnt++;
+	}
+	return pos;
+}
+
 void validate(std::vector<conf_data*> *d, t_gconf *c){
 	std::string buff;
 	{
@@ -39,7 +60,7 @@ void validate(std::vector<conf_data*> *d, t_gconf *c){
 	}
 	removeDuplWhitespace(buff);
 	if (!IsPathsDir(buff))
-		throw std::invalid_argument("not a directory");
+		throw std::invalid_argument("");
 	
 }
 
@@ -97,7 +118,6 @@ std::vector<conf_data*> *readConfFile(t_gconf *gconf, std::string const &file = 
 		bool root;
 		bool host;
 		bool methods;
-		bool redir;
 		bool CGI;
 	} doubles;
 
@@ -134,7 +154,7 @@ std::vector<conf_data*> *readConfFile(t_gconf *gconf, std::string const &file = 
 
 		/* CASE "SERVER" */
 		if (l_ine == "server"){
-			doubles.port = doubles.root = doubles.host = doubles.methods = doubles.redir = false;
+			doubles.port = doubles.root = doubles.host = doubles.methods = false;
 			co->push_back(new conf_data());
 
 			std::vector<conf_data*>::iterator it= --co->end();
@@ -259,32 +279,32 @@ std::vector<conf_data*> *readConfFile(t_gconf *gconf, std::string const &file = 
 						}
 						break;
 					case 7:
-						content.getline(line, 10000, ';');
-						if (doubles.redir)
-							break;
-						else
-							doubles.redir = true;
-						{
-							if (content.eof())
-									throw std::invalid_argument("no ';' found");
-							size_t code;
-							li_ne = line;
-							char *end;
-							for(size_t j = 0; line[j]; j++)
-							{
-								if (isdigit(line[j])){
-									code = strtol(&line[j], &end, 10);
-									if (!std::isspace(*end) || (!isInBounds<size_t>(code, 100, 103) && !isInBounds<size_t>(code, 200, 208) && !isInBounds<size_t>(code, 300, 308)
-										&& !isInBounds<size_t>(code, 400, 451) && !isInBounds<size_t>(code, 500, 511)))
-										throw std::invalid_argument("invalid error code");
-									j += 3;
-								}
-								else if(isalpha(line[j])){
-									(*it)->redir_url = std::make_pair(code, &line[j]);
-									break;
-								}
-							}
-						}
+						// content.getline(line, 10000, ';');
+						// if (doubles.redir)
+						// 	break;
+						// else
+						// 	doubles.redir = true;
+						// {
+						// 	if (content.eof())
+						// 			throw std::invalid_argument("no ';' found");
+						// 	size_t code;
+						// 	li_ne = line;
+						// 	char *end;
+						// 	for(size_t j = 0; line[j]; j++)
+						// 	{
+						// 		if (isdigit(line[j])){
+						// 			code = strtol(&line[j], &end, 10);
+						// 			if (!std::isspace(*end) || (!isInBounds<size_t>(code, 100, 103) && !isInBounds<size_t>(code, 200, 208) && !isInBounds<size_t>(code, 300, 308)
+						// 				&& !isInBounds<size_t>(code, 400, 451) && !isInBounds<size_t>(code, 500, 511)))
+						// 				throw std::invalid_argument("invalid error code");
+						// 			j += 3;
+						// 		}
+						// 		else if(isalpha(line[j])){
+						// 			(*it)->redir_url = std::make_pair(code, &line[j]);
+						// 			break;
+						// 		}
+						// 	}
+						// }
 						break;
 					case 8:
 						content.getline(line, 10000, '(');
@@ -309,9 +329,9 @@ std::vector<conf_data*> *readConfFile(t_gconf *gconf, std::string const &file = 
 							while ((pos = Fpath.find(';')) != std::string::npos) {
 								sub = Fpath.substr(0, pos);
 								removeDuplWhitespace(sub);
-								std::string const cases[2] = {"autoindex", "index"};
+								std::string const cases[3] = {"autoindex", "index", "return"};
 								int ind = 0;
-								for (size_t i = 0; i < 2; i++)
+								for (size_t i = 0; i < 3; i++)
 								{
 									if (!sub.compare(0, cases[i].length(), cases[i])){
 										ind = i + 1;
@@ -329,6 +349,35 @@ std::vector<conf_data*> *readConfFile(t_gconf *gconf, std::string const &file = 
 								{
 									std::string def_files = sub.substr(6);
 									(*it)->def_answer_if_dir.insert(std::make_pair(Fname, removeDuplWhitespace(def_files)));
+								}
+									break;
+								case 3:
+								{
+									std::string def_files = sub.substr(7);
+									removeDuplWhitespace(def_files);
+									char *end;
+
+									if (!isdigit(def_files[0]))
+										throw std::invalid_argument("URL redirection code required");
+									
+									size_t code;
+									code = strtol(def_files.c_str(), &end, 10);
+									std::string fullpath = Fname + def_files.substr(4, nthOccurrence(def_files, " ", 2) - 4);
+
+									if (!std::isspace(*end) || (code != 301 && code != 302))
+										throw std::invalid_argument("invalid redirection code");
+									if (!is_file(fullpath))
+										throw std::invalid_argument("requested resource is not a file or file path is wrong");
+									
+									for(size_t j = 0; def_files[j]; j++)
+									{
+										if(!isspace(def_files[j])){
+											if (std::count(def_files.begin(), def_files.end(), ' ') > 2)
+                                                throw std::invalid_argument("only one URI may be specified per file");
+											(*it)->redir_url.insert(std::make_pair(fullpath, removeDuplWhitespace(def_files.erase(4, nthOccurrence(def_files, " ", 2) - 4))));
+											break;
+										}
+									}
 								}
 									break;
 								default:

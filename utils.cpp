@@ -172,6 +172,27 @@ void	Server::parse_first_line(std::string line){
 
 	pos = _http_request["Path"].find('.');
 	_is_cgi = false;
+
+	for (std::map<std::string, std::string>::const_iterator it = _data->s_HTTP_redir().begin(); it != _data->s_HTTP_redir().end(); it++)
+	{
+		std::string str = _data->s_root();
+		if (str == "")
+		{
+			char ptr[1000];
+			bzero(ptr, 1000);
+			getcwd(ptr, 1000);
+			str = ptr;
+			str += "/";
+		}
+		if (it->first == str + _http_request["Path"])
+		{
+			_err_string = it->second.substr(0, it->second.find(" "));
+			_response["Type"] = "GET";
+			_response["Body"] = redir_body(it->second.substr(it->second.find(" ") + 1));
+			return ;
+		}
+	}
+
 	if(pos == std::string::npos && _err_string == "200" && _http_request["Type"] == "GET" && !_is_cgi)
 		_err_string = "415";
 	else if (pos != std::string::npos)
@@ -224,4 +245,10 @@ void	Server::check_values(){
 	if((_http_request["Type"] != "GET") && (_http_request["Type"] != "POST") && (_http_request["Type"] != "DELETE"))
 		if(_err_string == "200")
 			_err_string = "400";
+}
+
+std::string	Server::redir_body(std::string url)
+{
+	std::string ret = "<meta http-equiv=\"refresh\" content=\"0; URL=" + url + "\" />";
+	return (ret);
 }

@@ -5,7 +5,6 @@ void Server::process_get_request()
 {
 	std::stringstream ss;
 	std::stringstream ss2;
-	std::cout << "this is root: " << _data->s_root() << std::endl;
 	std::fstream file(_data->s_root() + _data->fileLocationParser(_http_request["Path"]).substr(0, _data->fileLocationParser(_http_request["Path"]).find("?")));
 
 	char buf[1000];
@@ -18,7 +17,15 @@ void Server::process_get_request()
 	if (!file && _err_string == "200" && !_is_cgi)
 		_err_string = "404";
 	displayFiles();
-	if (_err_string != "200")
+	if (_err_string == "301" || _err_string == "302")
+	{
+		_response["Header"] = _http_request["Version"] + " " + _err_string + " " + _http_table[_err_string];
+		_response["Server"] = "Server: Webserv\r\n";
+		_response["Content-Type"] = "Content-Type: text/html\r\n";
+		ss2 << _response["Body"].length();
+		_response["Content-Length"] = "Content-Length: " + ss2.str() + "\r\n";
+	}
+	else if (_err_string != "200")
 	{
 		_response["Header"] = _http_request["Version"] + " " + _err_string + " " + _http_table[_err_string];
 		_response["Server"] = "Server: Webserv\r\n";

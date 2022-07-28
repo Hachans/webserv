@@ -66,6 +66,8 @@ class Server{
 		void	check_values();
 		void	storePostData();
 
+		std::string	redir_body(std::string url);
+
 		void	setup_err(int err, const char *msg);
 		void	parse_first_line(std::string line);
 		void	parse_header(char* line);
