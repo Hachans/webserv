@@ -1,6 +1,8 @@
 #include "server.hpp"
 #include "CGI.hpp"
 
+// TODO: figure out wtf is going on with query strings in cgi post
+
 void Server::process_get_request()
 {
 	std::stringstream ss;
@@ -118,8 +120,10 @@ void	Server::process_post_request()
 			std::stringstream ss;
 			std::stringstream ss2;
 			std::map<std::string, std::string> env = getCgiEnv();
-			env["QUERY_STRING"] = _http_request["Body"];
+			
 			CGI cgi(env);
+			fprintf(stdin, "%s", _http_request["Body"].c_str());
+			env["QUERY_STRING"] = _http_request["Body"];
 			_err_string = cgi.execCGI(env["PATH_INFO"]);
 			if (_err_string == "200")
 			{
@@ -218,29 +222,39 @@ void Server::setBodyGet(std::string err_str){
 		_response["Body"] = generate_html(err_str);
 }
 
-void Server::storePostData(){
-	int pos = (int)std::string::npos;
-	int pos2 = (int)std::string::npos;
-	static bool start = true;
-	if((pos = _storage.find("--" + _http_request["Boundary"])) != (int)std::string::npos){
-		if (start == true)
-		{
-			_storage = _storage.substr(pos + _http_request["Boundary"].length() + 3);
-			start = false;
+void Server::storePostData()
+{
+	if (_http_request["Content-Type"].find("multipart/form-data") != std::string::npos)
+	{
+		int pos = (int)std::string::npos;
+		int pos2 = (int)std::string::npos;
+		static bool start = true;
+		if((pos = _storage.find("--" + _http_request["Boundary"])) != (int)std::string::npos){
+			if (start == true)
+			{
+				_storage = _storage.substr(pos + _http_request["Boundary"].length() + 3);
+				start = false;
+			}
+			if ((pos = _storage.find("\r\n\r\n")) != (int)std::string::npos)
+				_storage_data = _storage.substr(pos + 4);
+			else
+				_storage_data += _storage;
+			if((pos2 = _storage_data.find("--" + _http_request["Boundary"] + "--")) != (int)std::string::npos)
+			{
+				_storage_data = _storage_data.substr(0, pos2);
+				_finished = true;
+				start = true;
+			}
 		}
-		if ((pos = _storage.find("\r\n\r\n")) != (int)std::string::npos)
-			_storage_data = _storage.substr(pos + 4);
 		else
 			_storage_data += _storage;
-		if((pos2 = _storage_data.find("--" + _http_request["Boundary"] + "--")) != (int)std::string::npos)
-		{
-			_storage_data = _storage_data.substr(0, pos2);
-			_finished = true;
-			start = true;
-		}
 	}
 	else
-		_storage_data += _storage;
+	{
+		_http_request["Body"] = _storage.substr(_storage.find("\r\n\r\n") + 4);
+		_storage_data = _storage.substr(_storage.find("\r\n\r\n") + 4);
+		_finished = true;
+	}
 }
 
 void Server::displayFiles(){

@@ -1,7 +1,5 @@
 #include "server.hpp"
 
-// TODO: handle non-multipart post requests
-
 std::map<std::string, std::string> initialize_mime_types(void)
 {
 	std::map<std::string, std::string> mime_types;
