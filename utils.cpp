@@ -208,8 +208,8 @@ void	Server::parse_first_line(std::string line){
 		}
 	}
 
-	// if(pos == std::string::npos && _err_string == "200" && _http_request["Type"] == "GET" && !_is_cgi)
-	// 	_err_string = "415";
+	if(pos == std::string::npos && _err_string == "200" && _http_request["Type"] == "GET" && !_is_cgi)
+		_err_string = "415";
 	if (pos != std::string::npos)
 	{
 		if (_http_request["Path"].find("?") == std::string::npos)
