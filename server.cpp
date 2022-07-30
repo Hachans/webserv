@@ -1,7 +1,5 @@
 #include "server.hpp"
 
-//TODO: fix what marked as fuckeda
-
 Server::Server(conf_data *data) : _port(PORT), _err(false), _finished(false), _data(data), _dir(false){
 	size_t j;
 	std::string str = _data->CGI_extensions;
@@ -157,11 +155,10 @@ void Server::process_request(){
 		process_get_request();
 	}
 	else{
-		// THIS IS FUCKED
-		// if((pos = _data->s_methods().find("Type")) == std::string::npos)
-		// 	_err_string = "401";
-		// else
-		// 	_err_string = "400";
+		if((pos = _data->s_methods().find(_http_request["Type"])) == std::string::npos)
+			_err_string = "405";
+		else
+			_err_string = "400";
 		process_get_request();
 	}
 }

@@ -1,7 +1,8 @@
 #include "server.hpp"
 #include "CGI.hpp"
 
-// TODO: figure out wtf is going on with query strings in cgi post
+// TODO: fileLocationParser in config.hpp to handle file shortcuts
+// TODO: figure out wtf is up with autoindex
 
 void Server::process_get_request()
 {
@@ -121,9 +122,8 @@ void	Server::process_post_request()
 			std::stringstream ss2;
 			std::map<std::string, std::string> env = getCgiEnv();
 			
-			CGI cgi(env);
-			fprintf(stdin, "%s", _http_request["Body"].c_str());
 			env["QUERY_STRING"] = _http_request["Body"];
+			CGI cgi(env);
 			_err_string = cgi.execCGI(env["PATH_INFO"]);
 			if (_err_string == "200")
 			{

@@ -36,7 +36,6 @@ std::string const &CGI::execCGI(std::string const &filePath){
 	else{
 		_env["PATH_TRANSLATED"] = (*gconf->CGI)[exts[i]];
 	}
-	
 
 	if (!file_exists(filePath)){
 		path_to_use = _env["PATH_TRANSLATED"] + filePath;
@@ -44,6 +43,21 @@ std::string const &CGI::execCGI(std::string const &filePath){
 			return _ret_code = "404"; }
 	}
 
+	//Open out file
+	int file_fd = open("cgi_out_file", O_CREAT|O_WRONLY|O_TRUNC|O_NONBLOCK, 0777);
+	if (file_fd == -1)
+		return _ret_code = "500";
+
+	//exec cgi script, print output to cgi_out_file
+	pid_t pid;
+	int fds[2];
+	if (_env["REQUEST_METHOD"] == "POST")
+	{
+		if (pipe(fds) != 0)
+			return _ret_code = "500";
+		write(fds[1], _env["QUERY_STRING"].c_str(), _env["QUERY_STRING"].length());
+		_env["QUERY_STRING"] = "";
+	}
 	//Build env
 	char **env;
 	if ((env = (char**)calloc(_env.size() + 1, sizeof(char*))) == NULL)
@@ -60,19 +74,17 @@ std::string const &CGI::execCGI(std::string const &filePath){
 		}
 	}
 
-
-	//Open out file
-	int file_fd = open("cgi_out_file", O_CREAT|O_WRONLY|O_TRUNC|O_NONBLOCK, 0777);
-	if (file_fd == -1)
-		return _ret_code = "500";
-
-	//exec cgi script, print output to cgi_out_file
-	pid_t pid;
+	std::cout << "Length: " << _env["CONTENT_LENGTH"] << std::endl;
 	if ((pid = fork()) == -1){
 		perror("fork: ");
 		return _ret_code = "500";
 	}
 	if (!pid){
+		if (_env["REQUEST_METHOD"] == "POST")
+		{
+			if (dup2(fds[0], 0) == -1)
+				return _ret_code = "500";
+		}
 		if (dup2(file_fd, 1) == -1)
 			return _ret_code = "500";
 		if (execve(path_to_use.c_str(), NULL, env) == -1)

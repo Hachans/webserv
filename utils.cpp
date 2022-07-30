@@ -161,9 +161,26 @@ void	Server::parse_first_line(std::string line){
 	_http_request["Path"] = line.substr(lpos, (pos - lpos));
 	pos++;
 	lpos = pos;
-	if (_http_request["Path"] == "/")
-		_http_request["Path"] = "/index.html";
 	_http_request["Path"].erase(0, 1);
+	for (std::map<std::string, std::string>::const_iterator it = _data->s_defAnswers().begin(); it != _data->s_defAnswers().end(); it++)
+	{
+		if (_data->s_root() + _http_request["Path"] == it->first)
+		{
+			std::string str;
+			do
+			{
+				str = _data->findDefaultAnswerToFilepath(it->first);
+				std::fstream fs(it->first + str);
+				if (fs)
+				{
+					fs.close();
+					break ;
+				}
+			} while (str != "");
+			_http_request["Path"] += str;
+			break ;
+		}
+	}
 
 	pos = line.find('\n', lpos);
 	_http_request["Version"] = line.substr(lpos, (pos - lpos) - 1);
