@@ -74,7 +74,6 @@ std::string const &CGI::execCGI(std::string const &filePath){
 		}
 	}
 
-	std::cout << "Length: " << _env["CONTENT_LENGTH"] << std::endl;
 	if ((pid = fork()) == -1){
 		perror("fork: ");
 		return _ret_code = "500";

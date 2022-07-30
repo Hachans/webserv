@@ -1,14 +1,12 @@
 #include "server.hpp"
 #include "CGI.hpp"
 
-// TODO: fileLocationParser in config.hpp to handle file shortcuts
 // TODO: figure out wtf is up with autoindex
 
 void Server::process_get_request()
 {
 	std::stringstream ss;
 	std::stringstream ss2;
-	std::fstream file(_data->s_root() + _data->fileLocationParser(_http_request["Path"]).substr(0, _data->fileLocationParser(_http_request["Path"]).find("?")));
 
 	char buf[1000];
 	time_t now = time(0);
@@ -17,6 +15,11 @@ void Server::process_get_request()
 	_response["Date"] = "Date: ";
 	_response["Date"] += buf;
 	_response["Date"] += "\r\n";
+	std::fstream file(_data->s_root() + _http_request["Path"].substr(0, _http_request["Path"].find("?")));
+	if (!file)
+	{
+		file.open(_data->fileLocationParser(_http_request["Path"]).substr(0, _data->fileLocationParser(_http_request["Path"]).find("?")));
+	}
 	if (!file && _err_string == "200" && !_is_cgi)
 		_err_string = "404";
 	displayFiles();
@@ -70,8 +73,8 @@ void Server::process_get_request()
 		file.close();
 		_response["Header"] = _http_request["Version"] + " 200 " + _http_table["200"];
 		_response["Server"] = "Server: Webserv\r\n";
-		// if(_dir == false){
-		_response["Body"] = ss.str();
+		if(_dir == false)
+			_response["Body"] = ss.str();
 		_file_size = _response["Body"].length();
 		ss2 << _response["Body"].length();
 		_response["Content-Length"] = "Content-Length: " + ss2.str() + "\r\n";
@@ -259,11 +262,14 @@ void Server::storePostData()
 
 void Server::displayFiles(){
 
-	std::cout << _http_request["Path"] << std::endl;
+	// std::cout << _http_request["Path"] << std::endl;
 
 	char buff[254];
+	std::string str = _data->s_root() + _http_request["Path"];
+	if (*str.rbegin() != '/')
+		str += "/";
 	for(std::vector<std::string>::const_iterator it = _data->s_listing().begin(); it != _data->s_listing().end(); ++it){
-		if(((*it).compare(_http_request["Path"])) == 0)
+		if(((*it).compare(str)) == 0)
 			goto a;
 		strcpy(buff, (*it).c_str());
 		char* token = strtok(buff, "/");
@@ -277,14 +283,16 @@ void Server::displayFiles(){
 
 
 a:	struct stat buffer;
-	stat(_http_request["Path"].c_str(), &buffer);
+	stat((str).c_str(), &buffer);
 	if(S_ISDIR(buffer.st_mode)){
 		DIR *dir;
 		struct dirent *ent;
-		if ((dir = opendir(_http_request["Path"].c_str())) != NULL){
+		if ((dir = opendir((str).c_str())) != NULL){
 			_response["Body"] = "<!DOCTYPE html><html><body>";
 			while ((ent = readdir(dir)) != NULL){
-				_response["Body"] += "<a href=\"/" + _http_request["Path"] + "/";
+				_response["Body"] += "<a href=\"/" + _http_request["Path"];
+				if (*_response["Body"].rbegin() != '/')
+					_response["Body"] += "/";
 				_response["Body"] += ent->d_name;
 				_response["Body"] += "\">";
 				_response["Body"] += ent->d_name;
@@ -293,6 +301,7 @@ a:	struct stat buffer;
 			closedir(dir);
 			_response["Body"] += "</body></html>";
 			_dir = true;
+			_err_string = "200";
 		}
 		else _err_string = "401";
 	}

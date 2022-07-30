@@ -173,8 +173,6 @@ int	Server::send_response(struct pollfd *poll){
 		resp = _cgi_response;
 		_is_cgi = false;
 	}
-	if (status == true)
-		std::cout << resp << std::endl;
 	int rsize = resp.length();
 	int ret = send(poll->fd, resp.c_str(), (BUFFER_SIZE < rsize ? BUFFER_SIZE : rsize), 0);
 	_http_request["Content-Type"] = "";
