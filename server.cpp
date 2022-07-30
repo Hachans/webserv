@@ -163,7 +163,6 @@ void Server::process_request(){
 	}
 }
 
-
 int	Server::send_response(struct pollfd *poll){
 	static bool status = true;
 	static std::string resp = _response["Header"] + _response["Date"] + _response["Server"] + _response["Content-Type"] + _response["Content-Length"] + _response["Connection"] + "\r\n" + _response["Body"];
