@@ -367,7 +367,7 @@ std::vector<conf_data*> *readConfFile(t_gconf *gconf, std::string const &file = 
 									if (!std::isspace(*end) || (code != 301 && code != 302))
 										throw std::invalid_argument("invalid redirection code");
 									if (!is_file(fullpath))
-										throw std::invalid_argument("requested resource is not a file or file path is wrong");
+										throw std::invalid_argument("requested resource: " + fullpath + " is not a file or file path is wrong");
 									
 									for(size_t j = 0; def_files[j]; j++)
 									{

@@ -1,7 +1,8 @@
 #include "server.hpp"
 
-Server::Server(conf_data *data) : _port(PORT), _err(false), _finished(false), _data(data), _dir(false){
+Server::Server(conf_data *data) : _port(PORT), _finished(false), _err(false) , _data(data), _dir(false){
 	size_t j;
+	_data_vec.push_back(data);
 	std::string str = _data->CGI_extensions;
 	while (_data->CGI_extensions != "")
 	{
@@ -93,6 +94,27 @@ bool	Server::handle_existing_connection(struct pollfd *poll){
 		if(_storage_data == ""){
 			parse_first_line(std::string(_buffer));
 			parse_header(_buffer);
+		}
+
+
+		_http_request["HOST"] = "awesome";
+		for (std::vector<conf_data*>::const_iterator it = _data_vec.begin(); it != _data_vec.end(); ++it)
+		{
+			std::string names = (*it)->s_names();
+			std::string n;
+			while (names != "")
+			{
+				n = names.substr(0, names.find(' '));
+				if (n == _http_request["HOST"]){
+					_data = *it;
+					break;
+				}
+
+				if (names.find(' ') != names.npos)
+					names.erase(0, names.find(' ') + 1);
+				else
+					names.clear();
+			}
 		}
 		process_request();
 		if(_finished == true){

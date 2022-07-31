@@ -15,15 +15,30 @@ Socket::~Socket(){
 
 int	Socket::port_launch(){
 	for(_nfds = 0; _nfds < _conf_vector[0].size(); _nfds++){
-		Server serv(_conf_vector[0][_nfds]);
-		if(_conf_vector[0].size() > _nfds)
-			serv.set_port(serv.get_data()->s_port());
-		serv.setup_serv();
-		if(serv.check_error() == true)
-			return ERR;
-		_poll_fds[_nfds].fd = serv.get_server_fd();
-		_poll_fds[_nfds].events = POLLIN;
-		_server_list.push_back(serv);
+
+		bool samePortHost = false;
+		for (std::list<Server>::iterator it = _server_list.begin(); it != _server_list.end(); ++it)
+		{
+			if ((*it).get_data()->s_port() == _conf_vector[0][_nfds]->s_port() && (*it).get_data()->s_host() == _conf_vector[0][_nfds]->s_host())
+			{
+				(*it).addData(_conf_vector[0][_nfds]);
+				samePortHost = true;
+			}
+		}
+		
+		if (!samePortHost){
+
+			Server serv(_conf_vector[0][_nfds]);
+
+			if(_conf_vector[0].size() > _nfds)
+				serv.set_port(serv.get_data()->s_port());
+			serv.setup_serv();
+			if(serv.check_error() == true)
+				return ERR;
+			_poll_fds[_nfds].fd = serv.get_server_fd();
+			_poll_fds[_nfds].events = POLLIN;
+			_server_list.push_back(serv);
+		}
 	}
 	return 1;
 }

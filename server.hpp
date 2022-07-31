@@ -27,16 +27,20 @@
 class conf_data;
 
 class Server{
-	int									_serv_fd;
-	int									_listen_fd;
+	int									_serv_fd; //
+	int									_listen_fd;//
+	int									_port;//
+	std::vector<int>					_clients;//
+	struct sockaddr_in					_address;//
 	char								_buffer[BUFFER_SIZE + 1];
-	int									_port;
-	bool								_remove_client;
+	std::string							_storage;
 	bool								_end_connection;
-	bool								_err;
-	std::vector<int>					_clients;
-	struct sockaddr_in					_address;
 	std::map<std::string, std::string>	_http_request;
+	std::string							_storage_data;
+	bool								_finished;
+	bool								_remove_client; //?
+
+	bool								_err;
 	std::map<std::string, std::string>	_response;
 	std::map<std::string, std::string>	_http_table;
 	std::map<std::string, std::string>	_mime_types;
@@ -44,10 +48,8 @@ class Server{
 	int									_file_size;
 	int									_file_offset;
 	std::string							_err_string;
-	std::string							_storage;
-	bool								_finished;
-	std::string							_storage_data;
 	std::string							_cgi_response;
+	std::vector<conf_data*>				_data_vec;
 	conf_data							*_data;
 	bool								_dir;
 	bool								_is_cgi;
@@ -96,6 +98,10 @@ class Server{
 		conf_data *get_data(){ return _data; }
 
 		void	displayFiles();
+
+		void	addData(conf_data *d){
+			_data_vec.push_back(d);
+		}
 
 		std::map<std::string, std::string> getCgiEnv(void);
 
