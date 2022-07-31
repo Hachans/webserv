@@ -1,4 +1,4 @@
 webserv.dSYM
 webserv
 .DS_Store
-conf
+conf/file.conf
