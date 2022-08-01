@@ -2,6 +2,16 @@
 
 Server::Server(conf_data *data) : _port(PORT), _finished(false), _err(false) , _data(data), _dir(false){
 	_data_vec.push_back(data);
+	size_t j;
+	std::string str = _data->CGI_extensions;
+	while (_data->CGI_extensions != "")
+	{
+		j = str.find(" ");
+		_cgi_types.push_back(str.substr(0, j));
+		str.erase(0, j+1);
+		if (j == std::string::npos)
+			break;
+	}
 }
 
 Server::~Server(){
@@ -87,7 +97,7 @@ bool	Server::handle_existing_connection(struct pollfd *poll){
 		}
 
 
-		_http_request["HOST"] = "deus";
+		// _http_request["HOST"] = "deus";
 		for (std::vector<conf_data*>::const_iterator it = _data_vec.begin(); it != _data_vec.end(); ++it)
 		{
 			std::string names = (*it)->s_names();
@@ -95,9 +105,10 @@ bool	Server::handle_existing_connection(struct pollfd *poll){
 			while (names != "")
 			{
 				n = names.substr(0, names.find(' '));
-				if (n == _http_request["HOST"]){
+				if (n == _http_request["Host"]){
 					_data = *it;
 					size_t j;
+					_cgi_types.clear();
 					std::string str = _data->CGI_extensions;
 					while (_data->CGI_extensions != "")
 					{
@@ -130,6 +141,7 @@ bool	Server::handle_existing_connection(struct pollfd *poll){
 		poll->fd = REM;
 		_remove_client = true;
 	}
+	_data = _data_vec[0];
 	return _end_connection;
 }
 
