@@ -166,18 +166,19 @@ void	Server::parse_first_line(std::string line){
 	{
 		if (_data->s_root() + _http_request["Path"] == it->first)
 		{
-			std::string str;
-			do
+			std::string str = _data->findDefaultAnswerToFilepath(it->first, true);
+			while (str != "")
 			{
-				str = _data->findDefaultAnswerToFilepath(it->first);
 				std::fstream fs(it->first + str);
 				if (fs)
 				{
 					fs.close();
 					break ;
 				}
-			} while (str != "");
+				str = _data->findDefaultAnswerToFilepath(it->first);
+			}
 			_http_request["Path"] += str;
+
 			break ;
 		}
 	}

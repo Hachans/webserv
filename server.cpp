@@ -91,7 +91,7 @@ bool	Server::handle_existing_connection(struct pollfd *poll){
 		}
 	}
 	else if((ret = recieve_data(poll)) > 0){
-		if(_storage != ""){
+		if(_storage_data == ""){
 			std::string temp = _storage.substr(_storage.find("Host: ") + 6);
 			_http_request["Host"] = temp.substr(0, temp.find("\r\n"));
 		}
@@ -127,12 +127,12 @@ bool	Server::handle_existing_connection(struct pollfd *poll){
 			}
 		}
 
+
 		if (_storage_data == "")
 		{
 			parse_first_line(std::string(_buffer));
 			parse_header(_buffer);
 		}
-		std::cout << "Server_names: "<<_data->s_names()<<std::endl;
 		process_request();
 		if(_finished == true){
 			poll->events = POLLOUT;
@@ -148,6 +148,17 @@ bool	Server::handle_existing_connection(struct pollfd *poll){
 		_remove_client = true;
 	}
 	_data = _data_vec[0];
+	size_t j;
+	_cgi_types.clear();
+	std::string str = _data->CGI_extensions;
+	while (_data->CGI_extensions != "")
+	{
+		j = str.find(" ");
+		_cgi_types.push_back(str.substr(0, j));
+		str.erase(0, j+1);
+		if (j == std::string::npos)
+			break;
+	}
 	return _end_connection;
 }
 
