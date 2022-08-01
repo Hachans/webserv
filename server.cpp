@@ -105,7 +105,7 @@ bool	Server::handle_existing_connection(struct pollfd *poll){
 			while (names != "")
 			{
 				n = names.substr(0, names.find(' '));
-				if (n == _http_request["Host"]){
+				if (n + "\r" == _http_request["Host"]){
 					_data = *it;
 					size_t j;
 					_cgi_types.clear();
@@ -127,6 +127,7 @@ bool	Server::handle_existing_connection(struct pollfd *poll){
 					names.clear();
 			}
 		}
+		std::cout << "Server_names: "<<_data->s_names()<<std::endl;
 		process_request();
 		if(_finished == true){
 			poll->events = POLLOUT;
