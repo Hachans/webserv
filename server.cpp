@@ -91,11 +91,10 @@ bool	Server::handle_existing_connection(struct pollfd *poll){
 		}
 	}
 	else if((ret = recieve_data(poll)) > 0){
-		if(_storage_data == ""){
-			parse_first_line(std::string(_buffer));
-			parse_header(_buffer);
+		if(_storage != ""){
+			std::string temp = _storage.substr(_storage.find("Host: ") + 6);
+			_http_request["Host"] = temp.substr(0, temp.find("\r\n"));
 		}
-
 
 		// _http_request["HOST"] = "deus";
 		for (std::vector<conf_data*>::const_iterator it = _data_vec.begin(); it != _data_vec.end(); ++it)
@@ -105,7 +104,7 @@ bool	Server::handle_existing_connection(struct pollfd *poll){
 			while (names != "")
 			{
 				n = names.substr(0, names.find(' '));
-				if (n + "\r" == _http_request["Host"]){
+				if (n == _http_request["Host"]){
 					_data = *it;
 					size_t j;
 					_cgi_types.clear();
@@ -126,6 +125,12 @@ bool	Server::handle_existing_connection(struct pollfd *poll){
 				else
 					names.clear();
 			}
+		}
+
+		if (_storage_data == "")
+		{
+			parse_first_line(std::string(_buffer));
+			parse_header(_buffer);
 		}
 		std::cout << "Server_names: "<<_data->s_names()<<std::endl;
 		process_request();

@@ -17,9 +17,7 @@ void Server::process_get_request()
 	_response["Date"] += "\r\n";
 	std::fstream file(_data->s_root() + _http_request["Path"].substr(0, _http_request["Path"].find("?")));
 	if (!file)
-	{
-		file.open(_data->fileLocationParser(_http_request["Path"]).substr(0, _data->fileLocationParser(_http_request["Path"]).find("?")));
-	}
+		file.open(_data->s_root() + _data->fileLocationParser(_http_request["Path"]).substr(0, _data->fileLocationParser(_http_request["Path"]).find("?")));
 	if (!file && _err_string == "200" && !_is_cgi)
 		_err_string = "404";
 	displayFiles();

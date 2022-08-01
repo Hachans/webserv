@@ -317,7 +317,7 @@ class conf_data{
 		std::string CGI_extensions;
 		std::string full_file_path;
 
-		conf_data() :server_names("EKM_amazing_server"), root(""), host("127.0.0.1"), methods("GET_POST_DELETE"), port(4242)
+		conf_data() :server_names("EKM_amazing_server"), root(""), host("localhost"), methods("GET POST DELETE"), port(4242)
 		{
 			std::stringstream ss;
 			char ptr[1000];
