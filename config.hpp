@@ -312,12 +312,14 @@ class conf_data{
 		std::vector<std::string> listing;
 		std::string const empty_string;
 		std::map<std::string, std::string> redir_url;
+		ssize_t body_size;
 	public:
 
 		std::string CGI_extensions;
 		std::string full_file_path;
 
-		conf_data() :server_names("EKM_amazing_server"), root(""), host("localhost"), methods("GET POST DELETE"), port(4242)
+		conf_data() :server_names("EKM_amazing_server"), root(""), host("localhost"),
+					methods("GET POST DELETE"), port(4242), body_size(-1)
 		{
 			std::stringstream ss;
 			char ptr[1000];
@@ -376,6 +378,9 @@ class conf_data{
 		}
 		size_t s_port() const {
 			return this->port;
+		}
+		ssize_t s_bodySize() const {
+			return this->body_size;
 		}
 		std::vector<std::string> const &s_listing() const {
 			return this->listing;

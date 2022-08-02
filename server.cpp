@@ -127,7 +127,7 @@ bool	Server::handle_existing_connection(struct pollfd *poll){
 			}
 		}
 
-
+		std::cout << "body_size: " << _data->s_bodySize() << std::endl;
 		if (_storage_data == "")
 		{
 			parse_first_line(std::string(_buffer));
