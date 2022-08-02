@@ -14,7 +14,7 @@ class CGI
 		CGI(std::map<std::string, std::string> const &env);
 		~CGI();
 
-		std::string const &execCGI(std::string const &filePath);
+		std::string const &execCGI(std::string const &filePath, const std::string &root);
 };
 
 #endif

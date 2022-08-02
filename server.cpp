@@ -44,8 +44,8 @@ void	Server::setup_serv(){
 		// setup_err(ret, "error bind()");
 		if (ret == -1)
 		{
-			perror("bind");
-			close(_serv_fd), throw("bind fucked up");
+			// perror("bind");
+			close(_serv_fd), throw("bind error");
 		}
 		_listen_fd = listen(_serv_fd, SIZE_POLLFD);
 		setup_err(_listen_fd, "error listen()");
@@ -132,6 +132,7 @@ bool	Server::handle_existing_connection(struct pollfd *poll){
 		{
 			parse_first_line(std::string(_buffer));
 			parse_header(_buffer);
+			
 		}
 		process_request();
 		if(_finished == true){
@@ -178,6 +179,8 @@ std::map<std::string, std::string> Server::getCgiEnv(void)
 		{
 			(it->second.find("?") != std::string::npos) ? env["QUERY_STRING"] = it->second.substr(it->second.find("?") + 1) : env["QUERY_STRING"] = "";
 			env["SCRIPT_NAME"] = it->second.substr(0, it->second.find("?"));
+			// if (env["SCRIPT_NAME"].rfind("/") != std::string::npos)
+			// 	env["SCRIPT_NAME"] = env["SCRIPT_NAME"].substr(env["SCRIPT_NAME"].rfind("/"));
 			env["PATH_INFO"] = env["SCRIPT_NAME"];
 		}
 		else if (it->first == "Type")

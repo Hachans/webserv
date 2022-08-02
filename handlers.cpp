@@ -47,7 +47,7 @@ void Server::process_get_request()
 	{
 		std::map<std::string, std::string> env = getCgiEnv();
 		CGI cgi(env);
-		_err_string = cgi.execCGI(env["PATH_INFO"]);
+		_err_string = cgi.execCGI(env["PATH_INFO"], _data->s_root());
 		if (_err_string == "200")
 		{
 			std::fstream fs("cgi_out_file");
@@ -129,7 +129,7 @@ void	Server::process_post_request()
 			
 			env["QUERY_STRING"] = _http_request["Body"];
 			CGI cgi(env);
-			_err_string = cgi.execCGI(env["PATH_INFO"]);
+			_err_string = cgi.execCGI(env["PATH_INFO"], _data->s_root());
 			if (_err_string == "200")
 			{
 				std::fstream fs("cgi_out_file");

@@ -12,7 +12,7 @@ CGI::~CGI()
 {
 }
 
-std::string const &CGI::execCGI(std::string const &filePath){
+std::string const &CGI::execCGI(std::string const &filePath, const std::string &root){
 	//Text color modifiers
 	Color::Modifier f_red(Color::Red);
 	Color::Modifier reset(Color::White, 0, 1);
@@ -32,6 +32,7 @@ std::string const &CGI::execCGI(std::string const &filePath){
 	if (!gconf->CGI->count(exts[i])){
 		std::cerr << f_red << "Path for script extension: " << exts[i]
 		<< " not specified. Path set to default" << reset << std::endl;
+		_env["PATH_TRANSLATED"] = root;
 	}
 	else{
 		_env["PATH_TRANSLATED"] = (*gconf->CGI)[exts[i]];
@@ -39,6 +40,8 @@ std::string const &CGI::execCGI(std::string const &filePath){
 
 	if (!file_exists(filePath)){
 		path_to_use = _env["PATH_TRANSLATED"] + filePath;
+		if (!file_exists(path_to_use))
+			path_to_use = root + filePath;
 		if (!file_exists(path_to_use)){  std::cerr  << f_red << filePath << ": file not found" << reset << std::endl;
 			return _ret_code = "404"; }
 	}
