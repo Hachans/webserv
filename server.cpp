@@ -132,7 +132,6 @@ bool	Server::handle_existing_connection(struct pollfd *poll){
 		{
 			parse_first_line(std::string(_buffer));
 			parse_header(_buffer);
-			
 		}
 		process_request();
 		if(_finished == true){

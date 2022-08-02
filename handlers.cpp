@@ -258,6 +258,7 @@ void Server::storePostData()
 	{
 		_http_request["Body"] = _storage.substr(_storage.find("\r\n\r\n") + 4);
 		_storage_data = _storage.substr(_storage.find("\r\n\r\n") + 4);
+		_storage_data = _storage_data.substr(0, _data->s_bodySize());
 		_finished = true;
 	}
 }
