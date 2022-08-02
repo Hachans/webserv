@@ -150,7 +150,7 @@ std::vector<conf_data*> *readConfFile(t_gconf *gconf, std::string const &file = 
 		f.getline(line, 10000, '{');
 		std::string l_ine(line);
 		
-		l_ine.erase(std::remove_if(l_ine.begin(), l_ine.end(), isspace), l_ine.end());
+		removeDuplWhitespace(l_ine);
 
 		/* CASE "SERVER" */
 		if (l_ine == "server"){
@@ -188,7 +188,7 @@ std::vector<conf_data*> *readConfFile(t_gconf *gconf, std::string const &file = 
 					case 2:
 						content.getline(line, 10000, ';');
 						if (doubles.port)
-							break;
+							throw std::invalid_argument("Port can only be set once");
 						else
 							doubles.port = true;
 						char *end;
