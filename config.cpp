@@ -160,7 +160,7 @@ std::vector<conf_data*> *readConfFile(t_gconf *gconf, std::string const &file = 
 			std::vector<conf_data*>::iterator it= --co->end();
 			f.getline(line, 10000, '}');
 			std::stringstream content(line);
-			std::string const rules[10] = {"server_names", "port", "error_page", "root", "host", "allowed_methods", "return", "location", "CGI", ""};
+			std::string const rules[11] = {"server_names", "port", "error_page", "root", "host", "allowed_methods", "return", "location", "CGI", "body_size", ""};
 
 			while (!content.eof())
 			{
@@ -168,7 +168,7 @@ std::vector<conf_data*> *readConfFile(t_gconf *gconf, std::string const &file = 
 				std::string li_ne(line);
 				li_ne.erase(remove_if(li_ne.begin(), li_ne.end(), isspace), li_ne.end());
 				int pos = 0;
-				for (size_t i = 0; i < 10; ++i)
+				for (size_t i = 0; i < 11; ++i)
 				{
 					if (li_ne == rules[i]){
 						pos = i + 1;
@@ -195,11 +195,16 @@ std::vector<conf_data*> *readConfFile(t_gconf *gconf, std::string const &file = 
 						if (content.eof())
 							throw std::invalid_argument("no ';' found");
 						li_ne = line;
-						li_ne.erase(remove_if(li_ne.begin(), li_ne.end(), isspace), li_ne.end());
+						removeDuplWhitespace(li_ne);
 						(*it)->port = strtol(li_ne.c_str(), &end, 10);
-						if (!(*it)->port || *end){
-							std::cerr << "invalid port value: '" << li_ne << "', port set to default" << std::endl;
-							(*it)->port = 4242;
+						{
+							std::string s_end(end);
+							if (!(*it)->port || (*end != ' ' && *end) || s_end.find_first_not_of(' ') != s_end.npos){
+								Color::Modifier f_red(Color::Red);
+								Color::Modifier reset(Color::White, 0, 1);
+								std::cerr << f_red << "\ninvalid port value: '" << li_ne << "', port set to default"<< reset << std::endl;
+								(*it)->port = 4242;
+							}
 						}
 						break;
 					case 3:
@@ -398,6 +403,24 @@ std::vector<conf_data*> *readConfFile(t_gconf *gconf, std::string const &file = 
 						(*it)->CGI_extensions = removeDuplWhitespace(li_ne);
 						break;
 					case 10:
+						{
+							content.getline(line, 10000, ';');
+							char *end;
+							if (content.eof())
+								throw std::invalid_argument("no ';' found");
+							li_ne = line;
+							removeDuplWhitespace(li_ne);
+							(*it)->body_size = strtol(li_ne.c_str(), &end, 10);
+							std::string s_end(end);
+							if ((*it)->body_size < 0 || (*end != ' ' && *end) || s_end.find_first_not_of(' ') != s_end.npos){
+								Color::Modifier f_red(Color::Red);
+								Color::Modifier reset(Color::White, 0, 1);
+								std::cerr << f_red << "\ninvalid body_size value: '" << li_ne << "', body_size set to -1" << reset << std::endl;
+								(*it)->body_size = 4242;
+							}
+						}
+						break;
+					case 11:
 						break;
 					default:
 						throw std::invalid_argument("invalid rule: " + li_ne);
