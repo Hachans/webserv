@@ -1,6 +1,6 @@
 #include "config.hpp"
 
-static inline bool is_file (const std::string& name) {
+inline bool is_file (const std::string& name) {
   struct stat buffer;
   return (stat(name.c_str(), &buffer) == 0 && !S_ISDIR(buffer.st_mode)); 
 }

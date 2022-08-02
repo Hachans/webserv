@@ -263,6 +263,11 @@ void Server::storePostData()
 	}
 }
 
+static inline bool is_dir (const std::string& name) {
+  struct stat buffer;
+  return (stat(name.c_str(), &buffer) == 0 && S_ISDIR(buffer.st_mode)); 
+}
+
 void Server::displayFiles(){
 
 	// std::cout << _http_request["Path"] << std::endl;
@@ -282,6 +287,8 @@ void Server::displayFiles(){
 			token = strtok(NULL, "/");
 		}
 	}
+	if (is_dir(str))
+		_err_string = "401";
 	return;
 
 

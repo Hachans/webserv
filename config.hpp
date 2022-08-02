@@ -503,5 +503,7 @@ class conf_data{
 std::vector<conf_data*> *readConfFile(t_gconf *gconf, std::string const &file);
 void validate(std::vector<conf_data*> *d, t_gconf *c);
 
+bool is_file (const std::string& name);
+
 
 #endif

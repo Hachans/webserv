@@ -226,7 +226,7 @@ void	Server::parse_first_line(std::string line){
 			if (*it == _http_request["Extention"])
 				_is_cgi = true;
 		}
-		if (_mime_types[_http_request["Extention"]] == "" && !_is_cgi)
+		if (_mime_types[_http_request["Extention"]] == "" && !_is_cgi && is_file(_data->s_root() + _http_request["Path"]))
 			_err_string = "415";
 	}
 }
