@@ -150,6 +150,11 @@ std::vector<conf_data*> *readConfFile(t_gconf *gconf, std::string const &file = 
 		f.getline(line, 10000, '{');
 		std::string l_ine(line);
 		
+		// l_ine.erase(std::remove_if(l_ine.begin(), l_ine.end(), isspace), l_ine.end());
+		while (l_ine.find_first_of('#') != l_ine.npos){
+			size_t pos = l_ine.find_first_of('#');
+			l_ine.erase(pos, l_ine.find('\n', pos) - pos);
+		}
 		removeDuplWhitespace(l_ine);
 
 		/* CASE "SERVER" */
@@ -166,7 +171,8 @@ std::vector<conf_data*> *readConfFile(t_gconf *gconf, std::string const &file = 
 			{
 				content.getline(line, 10000, ':');
 				std::string li_ne(line);
-				li_ne.erase(remove_if(li_ne.begin(), li_ne.end(), isspace), li_ne.end());
+				// li_ne.erase(remove_if(li_ne.begin(), li_ne.end(), isspace), li_ne.end());
+				removeDuplWhitespace(li_ne);
 				int pos = 0;
 				for (size_t i = 0; i < 11; ++i)
 				{
@@ -439,7 +445,9 @@ std::vector<conf_data*> *readConfFile(t_gconf *gconf, std::string const &file = 
 			{
 				content.getline(line, 10000, ':');
 				std::string li_ne(line);
-				li_ne.erase(remove_if(li_ne.begin(), li_ne.end(), isspace), li_ne.end());
+				removeDuplWhitespace(li_ne);
+
+				// li_ne.erase(remove_if(li_ne.begin(), li_ne.end(), isspace), li_ne.end());
 				int pos = 0;
 				for (size_t i = 0; i < 2; i++)
 				{
