@@ -81,7 +81,7 @@ bool	Server::handle_existing_connection(struct pollfd *poll){
 	int ret;
 	_end_connection = false;
 
-	if(poll->revents & POLLOUT){
+	if(poll->events & POLLOUT){
 		ret = send_response(poll);
 		if(ret < 0)
 			perror("send");
