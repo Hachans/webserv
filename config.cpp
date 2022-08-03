@@ -164,7 +164,12 @@ std::vector<conf_data*> *readConfFile(t_gconf *gconf, std::string const &file = 
 
 			std::vector<conf_data*>::iterator it= --co->end();
 			f.getline(line, 10000, '}');
-			std::stringstream content(line);
+			l_ine = line;
+			while (l_ine.find_first_of('#') != l_ine.npos){
+				size_t pos = l_ine.find_first_of('#');
+				l_ine.erase(pos, l_ine.find('\n', pos) - pos);
+			}
+			std::stringstream content(l_ine);
 			std::string const rules[11] = {"server_names", "port", "error_page", "root", "host", "allowed_methods", "return", "location", "CGI", "body_size", ""};
 
 			while (!content.eof())
@@ -394,7 +399,8 @@ std::vector<conf_data*> *readConfFile(t_gconf *gconf, std::string const &file = 
 								default:
 									if (sub == " " || sub == "")
 										break;
-									(*it)->file_locations.insert(std::make_pair(Fname, removeDuplWhitespace(sub)));
+									if ((*it)->file_locations.insert(std::make_pair(Fname, removeDuplWhitespace(sub))).second == 0)
+										(*it)->file_locations[Fname] += " " + removeDuplWhitespace(sub);
 									break;
 								}
 								Fpath.erase(0, pos + 1);
@@ -438,7 +444,12 @@ std::vector<conf_data*> *readConfFile(t_gconf *gconf, std::string const &file = 
 		/* CASE "ERROR_PAGE" */
 		else if(l_ine == "error_page"){
 			f.getline(line, 10000, '}');
-			std::stringstream content(line);
+			l_ine = line;
+			while (l_ine.find_first_of('#') != l_ine.npos){
+				size_t pos = l_ine.find_first_of('#');
+				l_ine.erase(pos, l_ine.find('\n', pos) - pos);
+			}
+			std::stringstream content(l_ine);
 			std::string const rules[2] = {"error_page", ""};
 
 			while (!content.eof())
@@ -499,7 +510,12 @@ std::vector<conf_data*> *readConfFile(t_gconf *gconf, std::string const &file = 
 		/* CASE CGI */
 		else if(l_ine == "CGI"){
 			f.getline(line, 10000, '}');
-			std::stringstream content(line);
+			l_ine = line;
+			while (l_ine.find_first_of('#') != l_ine.npos){
+				size_t pos = l_ine.find_first_of('#');
+				l_ine.erase(pos, l_ine.find('\n', pos) - pos);
+			}
+			std::stringstream content(l_ine);
 			std::string const rules[2] = {"extension", ""};
 
 			while (!content.eof())
