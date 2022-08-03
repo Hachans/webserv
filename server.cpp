@@ -87,11 +87,10 @@ bool	Server::handle_existing_connection(struct pollfd *poll){
 			close(poll->fd);
 			_end_connection = true;
 		}
-		else
-			ret = send_response(poll);
+		ret = send_response(poll);
 		if(ret < 0)
 		{
-			perror("send");
+			// perror("send");
 			close(poll->fd);
 			_end_connection = true;
 		}
