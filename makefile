@@ -11,7 +11,7 @@
 # **************************************************************************** #
 
 CC		= g++
-CFLAGS	= -Wall -Wextra -Werror -g -std=c++98 -pedantic -Wno-write-strings
+CFLAGS	= -Wall -Wextra -g -std=c++98 -pedantic -Wno-write-strings
 
 RM		= rm -f
 

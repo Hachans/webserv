@@ -1,10 +1,12 @@
 #include "server.hpp"
 #include "socket.hpp"
+#include <signal.h>
 
 t_gconf *gconf;
 
 int main(int argc, char *argv[])
 {
+	signal(SIGPIPE, SIG_IGN);
 	std::vector<conf_data*> *co;
 	gconf = new t_gconf;
 	gconf->error_pages = new std::map<size_t, std::string>();
