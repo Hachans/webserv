@@ -26,7 +26,18 @@ int main(int argc, char *argv[])
 		std::cerr << "Initiating with default settings" << reset <<"\n\n" ;
 		gconf->error_pages->clear();
 		gconf->CGI->clear();
-		co = readConfFile(gconf, "conf/default.conf");
+		try
+		{
+			co = readConfFile(gconf, "conf/default.conf");
+		}
+		catch(const std::exception& e)
+		{
+			std::cerr << f_red << "\nDefault configuration Error: " << e.what() << '\n';
+			std::cerr << "Server will now exit!!" << reset <<"\n\n" ;
+			return 1;
+		}
+		
+		
 	}
 
 	Socket sv(co);
