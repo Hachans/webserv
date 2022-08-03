@@ -82,7 +82,7 @@ void Server::process_get_request()
 		_response["Content-Length"] = "Content-Length: " + ss2.str() + "\r\n";
 		_response["Content-Type"] = "Content-Type: " + _mime_types[_http_request["Extention"]];
 	}
-	_response["Connection"] = "Connection: closed\r\n";
+	_response["Connection"] = "Connection: Closed\r\n";
 	_err_string = "200";
 	_finished = true;
 	_dir = false;
@@ -165,7 +165,7 @@ void	Server::process_post_request()
 			_response["Content-Type"] = "Content-Type: ";
 			_response["Content-Type"] += _mime_types[".html"];
 		}
-		_response["Connection"] = "Connection: closed\r\n";
+		_response["Connection"] = "Connection: Closed\r\n";
 		_err_string = "200";
 		}
 	}
@@ -203,7 +203,7 @@ void	Server::process_post_request()
 			_response["Content-Type"] += _mime_types[".html"];
 		}
 
-		_response["Connection"] = "Connection: closed\r\n";
+		_response["Connection"] = "Connection: Closed\r\n";
 		_err_string = "200";
 		_finished = true;
 }
