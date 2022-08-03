@@ -83,11 +83,6 @@ bool	Server::handle_existing_connection(struct pollfd *poll){
 
 	if(poll->revents & POLLOUT){
 		ret = send_response(poll);
-		if (_http_request["Connection"] == "close\r")
-		{
-			close(poll->fd);
-			_end_connection = true;
-		}
 		if(ret < 0)
 		{
 			// perror("send");
