@@ -15,6 +15,7 @@ CGI::~CGI()
 std::string const &CGI::execCGI(std::string const &filePath, const std::string &root){
 	//Text color modifiers
 	Color::Modifier f_red(Color::Red);
+	Color::Modifier f_green(Color::Green1);
 	Color::Modifier reset(Color::White, 0, 1);
 
 	std::string path_to_use(filePath);
@@ -42,10 +43,13 @@ std::string const &CGI::execCGI(std::string const &filePath, const std::string &
 		path_to_use = _env["PATH_TRANSLATED"] + filePath;
 		if (!file_exists(path_to_use))
 			path_to_use = root + filePath;
-		if (!file_exists(path_to_use)){  std::cerr  << f_red << filePath << ": file not found" << reset << std::endl;
+		if (!file_exists(path_to_use)){  std::cerr  << f_red << filePath << ": file not found" << reset << std::endl; 
+			std::cerr << f_red << "path: " << path_to_use << reset << std::endl;
 			return _ret_code = "404"; }
+	
 	}
 
+	std::cerr << f_green << "path to execve: " << path_to_use << reset << std::endl;
 	//Open out file
 	int file_fd = open("cgi_out_file", O_CREAT|O_WRONLY|O_TRUNC|O_NONBLOCK, 0777);
 	if (file_fd == -1)
@@ -82,6 +86,7 @@ std::string const &CGI::execCGI(std::string const &filePath, const std::string &
 		return _ret_code = "500";
 	}
 	if (!pid){
+		char **args = NULL;
 		if (_env["REQUEST_METHOD"] == "POST")
 		{
 			if (dup2(fds[0], 0) == -1)
@@ -89,16 +94,21 @@ std::string const &CGI::execCGI(std::string const &filePath, const std::string &
 		}
 		if (dup2(file_fd, 1) == -1)
 			return _ret_code = "500";
-		if (execve(path_to_use.c_str(), NULL, env) == -1)
-			return _ret_code = "500";
+		if (execve(path_to_use.c_str(), args, env) == -1){
+			perror("execve");
+			exit(1);
+		}
+		close(fds[0]); close(fds[1]);
 	}
 	else{
 		int status;
 		if (waitpid(pid, &status, 0) == -1)
 			return _ret_code = "500";
-		if (WIFEXITED(status) && WEXITSTATUS(status))
+		if (WIFEXITED(status) && WEXITSTATUS(status)){
 			return _ret_code = "500";
+		}
 		close(file_fd);
+		close(fds[1]);
 
 		{
 			size_t l = _env.size();

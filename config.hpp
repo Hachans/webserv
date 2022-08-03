@@ -3,6 +3,12 @@
 
 #include "server.hpp"
 
+#ifdef __linux__
+	#include <algorithm>
+	#include <string.h>
+	#include <fstream>
+#endif
+
 class Server;
 
 /* returns true if 'value' belongs in range between 'low' and 'high', or is equal to 'high'. Otherwise returns false */

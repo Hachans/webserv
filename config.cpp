@@ -121,13 +121,13 @@ std::vector<conf_data*> *readConfFile(t_gconf *gconf, std::string const &file = 
 		bool CGI;
 	} doubles;
 
-	std::ifstream f(file, std::ifstream::in);
+	std::ifstream f(file.c_str(), std::ifstream::in);
 	if (f.fail())
 		throw std::runtime_error("configuration file not found or corrupt");
 
 	//CHECK FOR INVALID "{}"
 	{
-		std::ifstream c(file, std::ifstream::in);
+		std::ifstream c(file.c_str(), std::ifstream::in);
 		if (c.fail())
 			throw std::runtime_error("configuration file not found or corrupt");
 		char cont[100000];

@@ -1,7 +1,13 @@
 #ifndef CGI_hpp
-#define CGI_hpp
+# define CGI_hpp
 
 #include "server.hpp"
+
+#ifdef __linux__
+	#include <sys/types.h>
+	#include <sys/wait.h>
+	#include <string.h>
+#endif
 
 extern t_gconf *gconf;
 

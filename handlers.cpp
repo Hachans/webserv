@@ -16,11 +16,11 @@ void Server::process_get_request()
 	_response["Date"] += buf;
 	_response["Date"] += "\r\n";
 	std::string test = _data->s_root() + _http_request["Path"].substr(0, _http_request["Path"].find("?"));
-	std::fstream file(_data->s_root() + _http_request["Path"].substr(0, _http_request["Path"].find("?")));
+	std::fstream file((_data->s_root() + _http_request["Path"].substr(0, _http_request["Path"].find("?"))).c_str());
 	if (!file)
 	{
 		std::string str = _data->fileLocationParser(_http_request["Path"]).substr(0, _data->fileLocationParser(_http_request["Path"]).find("?"));
-		file.open(_data->fileLocationParser(_http_request["Path"]).substr(0, _data->fileLocationParser(_http_request["Path"]).find("?")));
+		file.open(_data->fileLocationParser(_http_request["Path"]).substr(0, _data->fileLocationParser(_http_request["Path"]).find("?")).c_str());
 	}
 	if (!file && _err_string == "200" && !_is_cgi)
 		_err_string = "404";
@@ -108,7 +108,7 @@ void	Server::process_post_request()
 			file_name = _http_request["Content-Disposition"].substr(pos);
 			file_name = file_name.substr(0, file_name.length() - 2);
 		}
-		std::ifstream file(_data->s_root() + file_name);
+		std::ifstream file((_data->s_root() + file_name).c_str());
 		if (file && _err_string == "200" && !_is_cgi)
 			_err_string = "422";
 		file.close();
@@ -151,7 +151,7 @@ void	Server::process_post_request()
 			std::remove("cgi_out_file");
 		}
 		else{
-			std::ofstream ofs(_data->s_root() + file_name);
+			std::ofstream ofs((_data->s_root() + file_name).c_str());
 			ofs << _storage_data;
 			ofs.close();
 			if(_http_request["Expect"] == "100-continue")
@@ -216,7 +216,7 @@ void Server::setBodyGet(std::string err_str){
 	code_str >> code;
 	std::string page = _data->findErrorPage(code);
 
-	std::fstream file2(page);
+	std::fstream file2(page.c_str());
 		
 	if(file2.is_open()){
 		ss << file2.rdbuf();

@@ -3,15 +3,15 @@
 #                                                         :::      ::::::::    #
 #    makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: kpucylo <kpucylo@student.42wolfsburg.de    +#+  +:+       +#+         #
+#    By: mchatzip <mchatzip@student.42wolfsburg.de> +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2021/05/21 14:41:30 by mchatzip          #+#    #+#              #
-#    Updated: 2022/07/26 16:52:32 by kpucylo          ###   ########.fr        #
+#    Updated: 2022/08/03 13:59:06 by mchatzip         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 CC		= g++
-CFLAGS	= -Wall -Wextra -Werror -g -std=c++98 -pedantic
+CFLAGS	= -Wall -Wextra -Werror -g -std=c++98 -pedantic -Wno-write-strings
 
 RM		= rm -f
 
@@ -31,7 +31,7 @@ clean:
 
 fclean:		clean
 			$(RM) $(NAME)
-			rm -r webserv.dSYM
+			rm -rf webserv.dSYM
 
 re:			fclean all
 

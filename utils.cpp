@@ -169,7 +169,7 @@ void	Server::parse_first_line(std::string line){
 			std::string str = _data->findDefaultAnswerToFilepath(it->first, true);
 			while (str != "")
 			{
-				std::fstream fs(it->first + str);
+				std::fstream fs((it->first + str).c_str());
 				if (fs)
 				{
 					fs.close();

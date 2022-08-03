@@ -44,7 +44,7 @@ void	Server::setup_serv(){
 		// setup_err(ret, "error bind()");
 		if (ret == -1)
 		{
-			// perror("bind");
+			perror("bind");
 			close(_serv_fd), throw("bind error");
 		}
 		_listen_fd = listen(_serv_fd, SIZE_POLLFD);
