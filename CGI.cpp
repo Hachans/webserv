@@ -18,14 +18,14 @@ std::string const &CGI::execCGI(std::string const &filePath, const std::string &
 	Color::Modifier reset(Color::White, 0, 1);
 
 	std::string path_to_use(filePath);
-	std::string exts[2] = {".py", ".php"};
+	std::string exts[3] = {".py", ".php", ".pl"};
 	size_t i = 0;
-	for (; i < 2; i++){
+	for (; i < 3; i++){
 		size_t s = exts[i].size();
 		if (!filePath.compare(filePath.size() - s, s, exts[i]))
 			break;
 	}
-	if (i == 2){ std::cerr << f_red << filePath  << ": Script type not supported" << reset << std::endl;
+	if (i == 3){ std::cerr << f_red << filePath  << ": Script type not supported" << reset << std::endl;
 		return _ret_code = "415";} 
 
 	//modify PATH_INFO
