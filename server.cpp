@@ -84,7 +84,7 @@ bool	Server::handle_existing_connection(struct pollfd *poll){
 	if(poll->revents & POLLOUT){
 		ret = send_response(poll);
 		if(ret < 0)
-			perror("send");
+			std::cout << "send() failed" << std::endl;
 		else if(ret == 0){
 			close(poll->fd);
 			_end_connection = true;
@@ -247,11 +247,11 @@ int Server::recieve_data(struct pollfd	*poll){
 	int ret = recv(poll->fd, _buffer, BUFFER_SIZE, 0);
 	if(ret < 0){
 		_end_connection = true;
-		std::cout << "error recv()";
+		std::cout << "error recv()" << std::endl;
 		return ret;
 	}
 	if(ret == 0){
-		std::cout << "client closed connection\n";
+		std::cout << "client closed connection" << std::endl;
 		_end_connection = true;
 		return ret;
 	}
