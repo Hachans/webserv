@@ -22,7 +22,7 @@ void Server::process_get_request()
 	}
 	if (!file && _err_string == "200" && !_is_cgi)
 		_err_string = "404";
-	if (_http_request["Type"] == "GET")
+	if (_data->s_methods().find(_http_request["Type"]) != std::string::npos && _http_request["Type"] == "GET")
 		displayFiles();
 	if (_err_string == "301" || _err_string == "302")
 	{
