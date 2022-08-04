@@ -114,7 +114,7 @@ std::string const &CGI::execCGI(std::string const &filePath, const std::string &
 			size_t l = _env.size();
 			for (size_t i = 0; i < l; i++)
 				delete env[i];
-			delete[] env;
+			free(env);
 		}
 	}
 	return _ret_code = "200";
