@@ -84,7 +84,11 @@ bool	Server::handle_existing_connection(struct pollfd *poll){
 	if(poll->revents & POLLOUT){
 		ret = send_response(poll);
 		if(ret < 0)
+		{
 			std::cout << "send() failed" << std::endl;
+			close(poll->fd);
+			_end_connection = true;
+		}
 		else if(ret == 0){
 			close(poll->fd);
 			_end_connection = true;
