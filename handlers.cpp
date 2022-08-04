@@ -1,8 +1,6 @@
 #include "server.hpp"
 #include "CGI.hpp"
 
-// TODO: figure out wtf is up with autoindex
-
 void Server::process_get_request()
 {
 	std::stringstream ss;
@@ -24,7 +22,8 @@ void Server::process_get_request()
 	}
 	if (!file && _err_string == "200" && !_is_cgi)
 		_err_string = "404";
-	displayFiles();
+	if (_http_request["Type"] == "GET")
+		displayFiles();
 	if (_err_string == "301" || _err_string == "302")
 	{
 		_response["Header"] = _http_request["Version"] + " " + _err_string + " " + _http_table[_err_string];
