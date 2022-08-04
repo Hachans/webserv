@@ -197,14 +197,84 @@ std::map<std::string, std::string> Server::getCgiEnv(void)
 	return (env);
 }
 
+static inline bool is_dir (const std::string& name) {
+  struct stat buffer;
+  return (stat(name.c_str(), &buffer) == 0 && S_ISDIR(buffer.st_mode)); 
+}
+
 void Server::process_request(){
 	size_t pos;
-	if(_http_request["Type"] == "GET" && (pos = _data->s_methods().find("GET") != std::string::npos))
-		process_get_request();
-	else if (_http_request["Type"] == "POST" && (pos = _data->s_methods().find("POST") != std::string::npos))
-		process_post_request();
-	else if(_http_request["Type"] == "DELETE" && (pos = _data->s_methods().find("DELETE") != std::string::npos))
-		process_delete_request();
+	_cgi_err = false;
+	std::string temp = _data->s_root();
+	if (*temp.rbegin() == '/' && *_http_request["Path"].begin() == '/')
+		temp = temp.substr(0, temp.length() - 1);
+	temp += _http_request["Path"];
+	if (is_dir(temp) && *temp.rbegin() != '/')
+		temp += "/";
+	else
+		temp = temp.substr(0, temp.find_last_of('/') + 1);
+	if(_http_request["Type"] == "GET")
+	{
+		if (_data->s_mpl()[temp] != "")
+		{
+			if ((pos = _data->s_mpl()[temp].find("GET")) != std::string::npos)
+				process_get_request();
+			else
+			{
+				_err_string = "405";
+				_http_request["Type"] = "";
+				process_get_request();
+			}
+		}
+		else if ((pos = _data->s_methods().find("GET")) != std::string::npos)
+			process_get_request();
+		else
+		{
+			_err_string = "405";
+			_http_request["Type"] = "";
+			process_get_request();
+		}
+	}
+	else if(_http_request["Type"] == "POST")
+	{
+		if (_data->s_mpl()[temp] != "")
+		{
+			if ((pos = _data->s_mpl()[temp].find("POST")) != std::string::npos)
+				process_post_request();
+			else
+			{
+				_err_string = "405";
+				process_get_request();
+			}
+		}
+		else if ((pos = _data->s_methods().find("POST")) != std::string::npos)
+			process_post_request();
+		else
+		{
+			_err_string = "405";
+			process_get_request();
+		}
+	}
+	else if(_http_request["Type"] == "DELETE")
+	{
+		if (_data->s_mpl()[temp] != "")
+		{
+			if ((pos = _data->s_mpl()[temp].find("DELETE")) != std::string::npos)
+				process_delete_request();
+				else
+			{
+				_err_string = "405";
+				process_get_request();
+			}
+		}
+		else if ((pos = _data->s_methods().find("DELETE")) != std::string::npos)
+			process_delete_request();
+		else
+		{
+			_err_string = "405";
+			process_get_request();
+		}
+	}
 	else if(_http_request["Type"] == "HEAD" || _http_request["Type"] == "PUT" || _http_request["Type"] == "CONNECT" || _http_request["Type"] == "TRACE" || _http_request["Type"] == "PATCH" || _http_request["Type"] == "OPTIONS")
 	{
 		_err_string = "501";
@@ -222,15 +292,17 @@ void Server::process_request(){
 int	Server::send_response(struct pollfd *poll){
 	static bool status = true;
 	static std::string resp = _response["Header"] + _response["Date"] + _response["Server"] + _response["Content-Type"] + _response["Content-Length"] + _response["Connection"] + "\r\n" + _response["Body"];
-	if(status == false && !_is_cgi)
+	if(status == false && (!_is_cgi || _cgi_err))
 		resp = _response["Header"] + _response["Date"] + _response["Server"] + _response["Content-Type"] + _response["Content-Length"] + _response["Connection"] + "\r\n" + _response["Body"];
-	else if (_is_cgi)
+	else if (_is_cgi && !_cgi_err)
 	{
 		resp = _cgi_response;
 		_is_cgi = false;
 	}
 	int rsize = resp.length();
 	int ret = send(poll->fd, resp.c_str(), (BUFFER_SIZE < rsize ? BUFFER_SIZE : rsize), 0);
+	std::cout << "----------- RESPONSE -------------" << std::endl;
+	std::cout << resp << std::endl;
 	_http_request["Content-Type"] = "";
 	_http_request["Content-Disposition"] = "";
 	if(ret < 0)

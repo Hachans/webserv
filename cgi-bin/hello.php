@@ -1,6 +1,5 @@
 #!/usr/bin/php
 <?php echo "Content-Type: text/html\r\n\r\n"; ?>
-
 <html>
   <head>
     <title>Hello, World!</title>

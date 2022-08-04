@@ -410,7 +410,7 @@ class conf_data{
 		std::map<std::string, std::string> const &s_HTTP_redir() const {
 			return this->redir_url;
 		}
-		std::map<std::string, std::string> const &s_mpl() const {
+		std::map<std::string, std::string> &s_mpl() {
 			return methods_per_location;
 		}
 		//////////////////

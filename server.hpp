@@ -53,6 +53,7 @@ class Server{
 	conf_data							*_data;
 	bool								_dir;
 	bool								_is_cgi;
+	bool								_cgi_err;
 	
 
 

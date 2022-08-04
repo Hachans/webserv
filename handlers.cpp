@@ -40,6 +40,8 @@ void Server::process_get_request()
 		ss2 << _response["Body"].length();
 		_response["Content-Length"] = "Content-Length: " + ss2.str() + "\r\n";
 		_response["Content-Type"] = "Content-Type: " + _mime_types[".html"];
+		if (_is_cgi)
+			_cgi_err = true;
 	}
 	else if (_is_cgi)
 	{
