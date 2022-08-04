@@ -318,6 +318,7 @@ class conf_data{
 		std::vector<std::string> listing;
 		std::string const empty_string;
 		std::map<std::string, std::string> redir_url;
+		std::map<std::string, std::string> methods_per_location;
 		ssize_t body_size;
 	public:
 
@@ -408,6 +409,9 @@ class conf_data{
 		}
 		std::map<std::string, std::string> const &s_HTTP_redir() const {
 			return this->redir_url;
+		}
+		std::map<std::string, std::string> const &s_mpl() const {
+			return methods_per_location;
 		}
 		//////////////////
 

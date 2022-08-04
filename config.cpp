@@ -345,9 +345,9 @@ std::vector<conf_data*> *readConfFile(t_gconf *gconf, std::string const &file = 
 							while ((pos = Fpath.find(';')) != std::string::npos) {
 								sub = Fpath.substr(0, pos);
 								removeDuplWhitespace(sub);
-								std::string const cases[3] = {"autoindex", "index", "return"};
+								std::string const cases[4] = {"autoindex", "index", "return", "allowed_methods"};
 								int ind = 0;
-								for (size_t i = 0; i < 3; i++)
+								for (size_t i = 0; i < 4; i++)
 								{
 									if (!sub.compare(0, cases[i].length(), cases[i])){
 										ind = i + 1;
@@ -395,6 +395,27 @@ std::vector<conf_data*> *readConfFile(t_gconf *gconf, std::string const &file = 
 										}
 									}
 								}
+									break;
+								case 4:
+									{
+										std::string def_files = sub.substr(16);
+										removeDuplWhitespace(def_files);
+										std::string const methods[3] = {"GET", "POST", "DELETE"};
+										char *copy = strdup(def_files.c_str());
+										char *tabs = copy;
+										char *token = strtok(copy, " ");
+										size_t j = 0;
+										for (size_t i = 0; token; ++i){
+											for (j = 0; j < 3; j++)
+												if (token == methods[j])
+										break;
+										token = strtok(NULL, " ");
+										}
+										free(tabs);
+										if (j == 3)
+											throw std::invalid_argument("Invalid HTTP method");
+										(*it)->methods_per_location.insert(std::make_pair(Fname, def_files));
+									}
 									break;
 								default:
 									if (sub == " " || sub == "")
