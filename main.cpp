@@ -16,8 +16,9 @@ int main(int argc, char *argv[])
 	{
 		if (argc == 2)
 			co = readConfFile(gconf, argv[1]);
-		else
+		else{
 			throw std::invalid_argument("Invalid argument");
+		}
 		validate(co, gconf);
 	}
 	catch(const std::exception& e)
@@ -36,6 +37,10 @@ int main(int argc, char *argv[])
 		{
 			std::cerr << f_red << "\nDefault configuration Error: " << e.what() << '\n';
 			std::cerr << "Server will now exit!!" << reset <<"\n\n" ;
+			// delete co;
+			delete gconf->error_pages;
+			delete gconf->CGI;
+			delete gconf;
 			return 1;
 		}
 		

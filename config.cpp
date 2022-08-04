@@ -60,7 +60,7 @@ void validate(std::vector<conf_data*> *d, t_gconf *c){
 	}
 	removeDuplWhitespace(buff);
 	if (!IsPathsDir(buff))
-		throw std::invalid_argument("");
+		{throw std::invalid_argument("");}
 	
 }
 
@@ -110,7 +110,8 @@ std::string &removeDuplWhitespace(std::string &str){
 
 std::vector<conf_data*> *readConfFile(t_gconf *gconf, std::string const &file = "conf/default.conf"){
 	if (file.compare(file.size() - 5, 5, ".conf"))
-		throw std::invalid_argument("configuration file: invalid name");
+		{
+			throw std::invalid_argument("configuration file: invalid name");}
 	std::vector<conf_data*> *co = new std::vector<conf_data*>();
 
 	struct {
@@ -123,25 +124,41 @@ std::vector<conf_data*> *readConfFile(t_gconf *gconf, std::string const &file = 
 
 	std::ifstream f(file.c_str(), std::ifstream::in);
 	if (f.fail())
-		throw std::runtime_error("configuration file not found or corrupt");
+		{
+			for (std::vector<conf_data*>::iterator ite = co->begin(); ite != co->end(); ++ite)
+								delete *ite;
+			delete co;
+			throw std::runtime_error("configuration file not found or corrupt");}
 
 	//CHECK FOR INVALID "{}"
 	{
 		std::ifstream c(file.c_str(), std::ifstream::in);
 		if (c.fail())
-			throw std::runtime_error("configuration file not found or corrupt");
+			{
+				for (std::vector<conf_data*>::iterator ite = co->begin(); ite != co->end(); ++ite)
+								delete *ite;
+				delete co;
+				throw std::runtime_error("configuration file not found or corrupt");}
 		char cont[100000];
 		bzero(cont, 100000);
 		c.read(cont, 100000);
 		if (!strchr(cont, '{'))
-			throw std::invalid_argument("missing token '{'");
+			{
+				for (std::vector<conf_data*>::iterator ite = co->begin(); ite != co->end(); ++ite)
+								delete *ite;
+				delete co;
+				throw std::invalid_argument("missing token '{'");}
 		for (size_t i = 0; cont[i]; i++)
 		{
 			if (cont[i] == '{')
 				while (cont[i] !='}' && cont[i])
 					i++;
 			if (!cont[i])
-				throw std::invalid_argument("no matching '}'");
+				{
+					for (std::vector<conf_data*>::iterator ite = co->begin(); ite != co->end(); ++ite)
+								delete *ite;
+					delete co;
+					throw std::invalid_argument("no matching '}'");}
 		}
 	}
 
@@ -192,19 +209,31 @@ std::vector<conf_data*> *readConfFile(t_gconf *gconf, std::string const &file = 
 						content.getline(line, 10000, ';');
 						li_ne = line;
 						if (content.eof())
-								throw std::invalid_argument("no ';' found");
+								{
+									for (std::vector<conf_data*>::iterator ite = co->begin(); ite != co->end(); ++ite)
+								delete *ite;
+									delete co;
+									throw std::invalid_argument("no ';' found");}
 						(*it)->addServerNames(li_ne);
 						break;
 					
 					case 2:
 						content.getline(line, 10000, ';');
 						if (doubles.port)
-							throw std::invalid_argument("Port can only be set once");
+							{
+								for (std::vector<conf_data*>::iterator ite = co->begin(); ite != co->end(); ++ite)
+								delete *ite;
+								delete co;
+								throw std::invalid_argument("Port can only be set once");}
 						else
 							doubles.port = true;
 						char *end;
 						if (content.eof())
-							throw std::invalid_argument("no ';' found");
+							{
+								for (std::vector<conf_data*>::iterator ite = co->begin(); ite != co->end(); ++ite)
+								delete *ite;
+								delete co;
+								throw std::invalid_argument("no ';' found");}
 						li_ne = line;
 						removeDuplWhitespace(li_ne);
 						(*it)->port = strtol(li_ne.c_str(), &end, 10);
@@ -222,7 +251,11 @@ std::vector<conf_data*> *readConfFile(t_gconf *gconf, std::string const &file = 
 						content.getline(line, 10000, ';');
 						{
 							if (content.eof())
-									throw std::invalid_argument("no ';' found");
+									{
+										for (std::vector<conf_data*>::iterator ite = co->begin(); ite != co->end(); ++ite)
+								delete *ite;
+										delete co;
+										throw std::invalid_argument("no ';' found");}
 							std::vector<size_t> codes;
 							li_ne = line;
 							char *end;
@@ -232,7 +265,11 @@ std::vector<conf_data*> *readConfFile(t_gconf *gconf, std::string const &file = 
 									size_t c = strtol(&line[j], &end, 10);
 									if (!std::isspace(*end) || (!isInBounds<size_t>(c, 100, 103) && !isInBounds<size_t>(c, 200, 208) && !isInBounds<size_t>(c, 300, 308)
 										&& !isInBounds<size_t>(c, 400, 451) && !isInBounds<size_t>(c, 500, 511)))
-										throw std::invalid_argument("invalid error code");
+										{
+											for (std::vector<conf_data*>::iterator ite = co->begin(); ite != co->end(); ++ite)
+								delete *ite;
+											delete co;
+											throw std::invalid_argument("invalid error code");}
 									j += 3;
 									codes.push_back(c);
 								}
@@ -240,7 +277,11 @@ std::vector<conf_data*> *readConfFile(t_gconf *gconf, std::string const &file = 
 									std::string temp(&line[j]);
 									removeDuplWhitespace(temp);
 									if (temp.find_first_of(' ') != temp.npos)
-										throw std::invalid_argument("only one filepath allowed");
+										{
+											for (std::vector<conf_data*>::iterator ite = co->begin(); ite != co->end(); ++ite)
+								delete *ite;
+											delete co;
+											throw std::invalid_argument("only one filepath allowed");}
 									for (std::vector<size_t>::iterator i = codes.begin(); i != codes.end(); ++i)
 										(*it)->error_pages.insert(std::make_pair(*i, temp));
 									break;
@@ -256,7 +297,11 @@ std::vector<conf_data*> *readConfFile(t_gconf *gconf, std::string const &file = 
 							doubles.root = true;
 						li_ne = line;
 						if (content.eof())
-								throw std::invalid_argument("no ';' found");
+								{
+									for (std::vector<conf_data*>::iterator ite = co->begin(); ite != co->end(); ++ite)
+								delete *ite;
+									delete co;
+									throw std::invalid_argument("no ';' found");}
 						(*it)->root = removeDuplWhitespace(li_ne);
 						break;
 					case 5:
@@ -267,7 +312,11 @@ std::vector<conf_data*> *readConfFile(t_gconf *gconf, std::string const &file = 
 							doubles.host = true;
 						li_ne = line;
 						if (content.eof())
-								throw std::invalid_argument("no ';' found");
+								{
+									for (std::vector<conf_data*>::iterator ite = co->begin(); ite != co->end(); ++ite)
+								delete *ite;
+									delete co;
+									throw std::invalid_argument("no ';' found");}
 						(*it)->host = removeDuplWhitespace(li_ne);
 						break;
 					case 6:
@@ -279,7 +328,11 @@ std::vector<conf_data*> *readConfFile(t_gconf *gconf, std::string const &file = 
 								doubles.methods = true;
 							std::string const methods[3] = {"GET", "POST", "DELETE"};
 							if (content.eof())
-									throw std::invalid_argument("no ';' found");
+									{
+										for (std::vector<conf_data*>::iterator ite = co->begin(); ite != co->end(); ++ite)
+								delete *ite;
+										delete co;
+										throw std::invalid_argument("no ';' found");}
 							li_ne = line;
 							char *token = strtok(line, " \n\t");
 							size_t j = 0;
@@ -288,7 +341,11 @@ std::vector<conf_data*> *readConfFile(t_gconf *gconf, std::string const &file = 
 									if (token == methods[j])
 										break;
 								if (j == 3)
-									throw std::invalid_argument("Invalid HTTP method");
+									{
+										for (std::vector<conf_data*>::iterator ite = co->begin(); ite != co->end(); ++ite)
+								delete *ite;
+										delete co;
+										throw std::invalid_argument("Invalid HTTP method");}
 								token = strtok(NULL, " \n\t");
 							}
 							(*it)->methods = removeDuplWhitespace(li_ne);
@@ -302,7 +359,7 @@ std::vector<conf_data*> *readConfFile(t_gconf *gconf, std::string const &file = 
 						// 	doubles.redir = true;
 						// {
 						// 	if (content.eof())
-						// 			throw std::invalid_argument("no ';' found");
+						
 						// 	size_t code;
 						// 	li_ne = line;
 						// 	char *end;
@@ -312,7 +369,6 @@ std::vector<conf_data*> *readConfFile(t_gconf *gconf, std::string const &file = 
 						// 			code = strtol(&line[j], &end, 10);
 						// 			if (!std::isspace(*end) || (!isInBounds<size_t>(code, 100, 103) && !isInBounds<size_t>(code, 200, 208) && !isInBounds<size_t>(code, 300, 308)
 						// 				&& !isInBounds<size_t>(code, 400, 451) && !isInBounds<size_t>(code, 500, 511)))
-						// 				throw std::invalid_argument("invalid error code");
 						// 			j += 3;
 						// 		}
 						// 		else if(isalpha(line[j])){
@@ -325,21 +381,37 @@ std::vector<conf_data*> *readConfFile(t_gconf *gconf, std::string const &file = 
 					case 8:
 						content.getline(line, 10000, '(');
 						if (content.eof())
-							throw std::invalid_argument("expected '('");
+							{
+								for (std::vector<conf_data*>::iterator ite = co->begin(); ite != co->end(); ++ite)
+								delete *ite;
+								delete co;
+								throw std::invalid_argument("expected '('");}
 						{
 							std::string Fname;
 							std::string Fpath;
 							Fname = line;
 							removeDuplWhitespace(Fname);
 							if (Fname.find_first_of(" \t\n\v\f\r") != Fname.npos)
-								throw std::invalid_argument("only one filename allowed");
+								{
+									for (std::vector<conf_data*>::iterator ite = co->begin(); ite != co->end(); ++ite)
+								delete *ite;
+									delete co;
+									throw std::invalid_argument("only one filename allowed");}
 							content.getline(line, 10000, ')');
 							if (content.eof())
-								throw std::invalid_argument("expected ')'");
+								{
+									for (std::vector<conf_data*>::iterator ite = co->begin(); ite != co->end(); ++ite)
+								delete *ite;
+									delete co;
+									throw std::invalid_argument("expected ')'");}
 							Fpath = line;
 							removeDuplWhitespace(Fpath);
 							if (Fpath[Fpath.length() - 1] != ';')
-								throw std::invalid_argument("no ';' found");
+								{
+									for (std::vector<conf_data*>::iterator ite = co->begin(); ite != co->end(); ++ite)
+								delete *ite;
+									delete co;
+									throw std::invalid_argument("no ';' found");}
 							size_t pos = 0;
 							std::string sub;
 							while ((pos = Fpath.find(';')) != std::string::npos) {
@@ -358,7 +430,11 @@ std::vector<conf_data*> *readConfFile(t_gconf *gconf, std::string const &file = 
 								{
 								case 1:
 									if (sub.compare(10, 2, "on"))
-										throw std::invalid_argument("only allowed value for 'autoindex' is 'on'");
+										{
+											for (std::vector<conf_data*>::iterator ite = co->begin(); ite != co->end(); ++ite)
+								delete *ite;
+											delete co;
+											throw std::invalid_argument("only allowed value for 'autoindex' is 'on'");}
 									(*it)->listing.push_back(Fname);
 									break;
 								case 2:
@@ -374,22 +450,38 @@ std::vector<conf_data*> *readConfFile(t_gconf *gconf, std::string const &file = 
 									char *end;
 
 									if (!isdigit(def_files[0]))
-										throw std::invalid_argument("URL redirection code required");
+										{
+											for (std::vector<conf_data*>::iterator ite = co->begin(); ite != co->end(); ++ite)
+								delete *ite;
+											delete co;
+											throw std::invalid_argument("URL redirection code required");}
 									
 									size_t code;
 									code = strtol(def_files.c_str(), &end, 10);
 									std::string fullpath = Fname + def_files.substr(4, nthOccurrence(def_files, " ", 2) - 4);
 
 									if (!std::isspace(*end) || (code != 301 && code != 302))
-										throw std::invalid_argument("invalid redirection code");
+										{
+											for (std::vector<conf_data*>::iterator ite = co->begin(); ite != co->end(); ++ite)
+								delete *ite;
+											delete co;
+											throw std::invalid_argument("invalid redirection code");}
 									if (!is_file(fullpath))
-										throw std::invalid_argument("requested resource: " + fullpath + " is not a file or file path is wrong");
+										{
+											for (std::vector<conf_data*>::iterator ite = co->begin(); ite != co->end(); ++ite)
+								delete *ite;
+											delete co;
+											throw std::invalid_argument("requested resource: " + fullpath + " is not a file or file path is wrong");}
 									
 									for(size_t j = 0; def_files[j]; j++)
 									{
 										if(!isspace(def_files[j])){
 											if (std::count(def_files.begin(), def_files.end(), ' ') > 2)
-                                                throw std::invalid_argument("only one URI may be specified per file");
+                                                {
+													for (std::vector<conf_data*>::iterator ite = co->begin(); ite != co->end(); ++ite)
+								delete *ite;
+													delete co;
+													throw std::invalid_argument("only one URI may be specified per file");}
 											(*it)->redir_url.insert(std::make_pair(fullpath, removeDuplWhitespace(def_files.erase(4, nthOccurrence(def_files, " ", 2) - 4))));
 											break;
 										}
@@ -411,7 +503,11 @@ std::vector<conf_data*> *readConfFile(t_gconf *gconf, std::string const &file = 
 													break;
 											if (j == 3){
 												free(tabs);
-												throw std::invalid_argument("Invalid HTTP method");
+												{
+													for (std::vector<conf_data*>::iterator ite = co->begin(); ite != co->end(); ++ite)
+								delete *ite;
+													delete co;
+													throw std::invalid_argument("Invalid HTTP method");}
 											}
 											token = strtok(NULL, " ");
 										}
@@ -435,7 +531,11 @@ std::vector<conf_data*> *readConfFile(t_gconf *gconf, std::string const &file = 
 						content.getline(line, 10000, ';');
 						li_ne = line;
 						if (content.eof())
-								throw std::invalid_argument("no ';' found");
+								{
+									for (std::vector<conf_data*>::iterator ite = co->begin(); ite != co->end(); ++ite)
+								delete *ite;
+									delete co;
+									throw std::invalid_argument("no ';' found");}
 						(*it)->CGI_extensions = removeDuplWhitespace(li_ne);
 						break;
 					case 10:
@@ -443,7 +543,11 @@ std::vector<conf_data*> *readConfFile(t_gconf *gconf, std::string const &file = 
 							content.getline(line, 10000, ';');
 							char *end;
 							if (content.eof())
-								throw std::invalid_argument("no ';' found");
+								{
+									for (std::vector<conf_data*>::iterator ite = co->begin(); ite != co->end(); ++ite)
+								delete *ite;
+									delete co;
+									throw std::invalid_argument("no ';' found");}
 							li_ne = line;
 							removeDuplWhitespace(li_ne);
 							(*it)->body_size = strtol(li_ne.c_str(), &end, 10);
@@ -459,7 +563,11 @@ std::vector<conf_data*> *readConfFile(t_gconf *gconf, std::string const &file = 
 					case 11:
 						break;
 					default:
-						throw std::invalid_argument("invalid rule: " + li_ne);
+						{
+							for (std::vector<conf_data*>::iterator ite = co->begin(); ite != co->end(); ++ite)
+								delete *ite;
+							delete co;
+							throw std::invalid_argument("invalid rule: " + li_ne);}
 						break;
 				}
 				
@@ -497,7 +605,11 @@ std::vector<conf_data*> *readConfFile(t_gconf *gconf, std::string const &file = 
 						content.getline(line, 10000, ';');
 						{
 							if (content.eof())
-									throw std::invalid_argument("no ';' found");
+									{
+										for (std::vector<conf_data*>::iterator ite = co->begin(); ite != co->end(); ++ite)
+								delete *ite;
+										delete co;
+										throw std::invalid_argument("no ';' found");}
 							std::vector<size_t> codes;
 							li_ne = line;
 							char *end;
@@ -507,7 +619,11 @@ std::vector<conf_data*> *readConfFile(t_gconf *gconf, std::string const &file = 
 									size_t c = strtol(&line[j], &end, 10);
 									if (!std::isspace(*end) || (!isInBounds<size_t>(c, 100, 103) && !isInBounds<size_t>(c, 200, 208) && !isInBounds<size_t>(c, 300, 308)
 										&& !isInBounds<size_t>(c, 400, 451) && !isInBounds<size_t>(c, 500, 511)))
-										throw std::invalid_argument("invalid error code");
+										{
+											for (std::vector<conf_data*>::iterator ite = co->begin(); ite != co->end(); ++ite)
+								delete *ite;
+											delete co;
+											throw std::invalid_argument("invalid error code");}
 									j += 3;
 									codes.push_back(c);
 								}
@@ -515,7 +631,11 @@ std::vector<conf_data*> *readConfFile(t_gconf *gconf, std::string const &file = 
 									std::string temp(&line[j]);
 									removeDuplWhitespace(temp);
 									if (temp.find_first_of(' ') != temp.npos)
-										throw std::invalid_argument("only one filepath allowed");
+										{
+											for (std::vector<conf_data*>::iterator ite = co->begin(); ite != co->end(); ++ite)
+								delete *ite;
+											delete co;
+											throw std::invalid_argument("only one filepath allowed");}
 									for (std::vector<size_t>::iterator it = codes.begin(); it != codes.end(); it++)
 										gconf->error_pages->insert(std::make_pair(*it, &line[j]));
 									break;
@@ -526,7 +646,11 @@ std::vector<conf_data*> *readConfFile(t_gconf *gconf, std::string const &file = 
 					case 2:
 						break;
 					default:
-						throw std::invalid_argument("invalid rule: " + li_ne);
+						{
+							for (std::vector<conf_data*>::iterator ite = co->begin(); ite != co->end(); ++ite)
+								delete *ite;
+							delete co;
+							throw std::invalid_argument("invalid rule: " + li_ne);}
 						break;
 				}
 			}
@@ -560,22 +684,38 @@ std::vector<conf_data*> *readConfFile(t_gconf *gconf, std::string const &file = 
 					case 1:
 						content.getline(line, 10000, '(');
 						if (content.eof())
-							throw std::invalid_argument("expected '('");
+							{
+								for (std::vector<conf_data*>::iterator ite = co->begin(); ite != co->end(); ++ite)
+								delete *ite;
+								delete co;
+								throw std::invalid_argument("expected '('");}
 						{
 							std::string Fext;
 							std::string Fpath;
 							Fext = line;
 							removeDuplWhitespace(Fext);
 							if (Fext.find_first_of(" \t\n\v\f\r") != Fext.npos)
-								throw std::invalid_argument("only one file extension per rule allowed");
+								{
+									for (std::vector<conf_data*>::iterator ite = co->begin(); ite != co->end(); ++ite)
+								delete *ite;
+									delete co;
+									throw std::invalid_argument("only one file extension per rule allowed");}
 							content.getline(line, 10000, ')');
 							if (content.eof())
-								throw std::invalid_argument("expected ')'");
+								{
+									for (std::vector<conf_data*>::iterator ite = co->begin(); ite != co->end(); ++ite)
+								delete *ite;
+									delete co;
+									throw std::invalid_argument("expected ')'");}
 							Fpath = line;
 							removeDuplWhitespace(Fpath);
 							int pos = Fpath.find_first_of(';');
 							if (pos == static_cast<int>(Fpath.npos))
-								throw std::invalid_argument("no ';' found");
+								{
+									for (std::vector<conf_data*>::iterator ite = co->begin(); ite != co->end(); ++ite)
+								delete *ite;
+									delete co;
+									throw std::invalid_argument("no ';' found");}
 							std::string paths = Fpath.substr(0, pos);
 							gconf->CGI->insert(std::make_pair(Fext, paths));
 						}
@@ -583,14 +723,22 @@ std::vector<conf_data*> *readConfFile(t_gconf *gconf, std::string const &file = 
 					case 2:
 						break;
 					default:
-						throw std::invalid_argument("invalid rule: " + li_ne);
+						{
+							for (std::vector<conf_data*>::iterator ite = co->begin(); ite != co->end(); ++ite)
+								delete *ite;
+							delete co;
+							throw std::invalid_argument("invalid rule: " + li_ne);}
 						break;
 				}
 			}
 		}
 		else if (l_ine == ""){}
 		else
-			throw std::invalid_argument("invalid rule: " + l_ine);
+			{
+				for (std::vector<conf_data*>::iterator ite = co->begin(); ite != co->end(); ++ite)
+								delete *ite;
+				delete co;
+				throw std::invalid_argument("invalid rule: " + l_ine);}
 	}
 	return co;
 }
@@ -665,7 +813,6 @@ std::vector<conf_data*> *readConfFile(t_gconf *gconf, std::string const &file = 
 	
 // 	for (std::vector<conf_data*>::iterator ite = co->begin(); ite != co->end(); ++ite)
 // 		delete *ite;
-	
 // 	delete co;
 // 	delete gconf->error_pages;
 // 	delete gconf->CGI;
