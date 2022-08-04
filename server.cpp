@@ -227,6 +227,8 @@ int	Server::send_response(struct pollfd *poll){
 	}
 	int rsize = resp.length();
 	int ret = send(poll->fd, resp.c_str(), (BUFFER_SIZE < rsize ? BUFFER_SIZE : rsize), 0);
+	std::cout << "---------- RESPONSE ----------" << std::endl;
+	std::cout << resp;
 	_http_request["Content-Type"] = "";
 	_http_request["Content-Disposition"] = "";
 	if(ret < 0)
@@ -236,7 +238,7 @@ int	Server::send_response(struct pollfd *poll){
 	resp.erase(0, ret);
 	status = true;
 	
-	if(rsize <= 0){
+	if((rsize - ret) <= 0){
 		status = false;
 		poll->events = POLLIN;
 	}
