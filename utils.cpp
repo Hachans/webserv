@@ -164,11 +164,12 @@ void	Server::parse_first_line(std::string line){
 	_http_request["Path"].erase(0, 1);
 	for (std::map<std::string, std::string>::const_iterator it = _data->s_defAnswers().begin(); it != _data->s_defAnswers().end(); it++)
 	{
-		if (_data->s_root() + _http_request["Path"] == it->first)
+		if (_data->s_root() + _http_request["Path"] == it->first || _data->s_root() + _http_request["Path"] + "/" == it->first)
 		{
 			std::string str = _data->findDefaultAnswerToFilepath(it->first, true);
 			while (str != "")
 			{
+				std::string str2 = (it->first + str);
 				std::fstream fs((it->first + str).c_str());
 				if (fs)
 				{
@@ -177,8 +178,10 @@ void	Server::parse_first_line(std::string line){
 				}
 				str = _data->findDefaultAnswerToFilepath(it->first);
 			}
-			_http_request["Path"] += str;
 
+			if (*_http_request["Path"].rbegin() != '/' && str != "")
+				_http_request["Path"] += "/";
+			_http_request["Path"] += str;
 			break ;
 		}
 	}

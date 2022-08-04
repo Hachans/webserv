@@ -17,12 +17,11 @@ void Server::process_get_request()
 	std::fstream file((_data->s_root() + _http_request["Path"].substr(0, _http_request["Path"].find("?"))).c_str());
 	if (!file)
 	{
-		std::string str = _data->fileLocationParser(_http_request["Path"]).substr(0, _data->fileLocationParser(_http_request["Path"]).find("?"));
 		file.open(_data->fileLocationParser(_http_request["Path"]).substr(0, _data->fileLocationParser(_http_request["Path"]).find("?")).c_str());
 	}
 	if (!file && _err_string == "200" && !_is_cgi)
 		_err_string = "404";
-	if (_data->s_methods().find(_http_request["Type"]) != std::string::npos && _http_request["Type"] == "GET")
+	if (_data->s_methods().find(_http_request["Type"]) != std::string::npos && _http_request["Type"] == "GET" && _err_string != "200")
 		displayFiles();
 	if (_err_string == "301" || _err_string == "302")
 	{
