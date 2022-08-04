@@ -287,10 +287,10 @@ std::vector<conf_data*> *readConfFile(t_gconf *gconf, std::string const &file = 
 								for (j = 0; j < 3; j++)
 									if (token == methods[j])
 										break;
+								if (j == 3)
+									throw std::invalid_argument("Invalid HTTP method");
 								token = strtok(NULL, " \n\t");
 							}
-							if (j == 3)
-								throw std::invalid_argument("Invalid HTTP method");
 							(*it)->methods = removeDuplWhitespace(li_ne);
 						}
 						break;
@@ -398,7 +398,7 @@ std::vector<conf_data*> *readConfFile(t_gconf *gconf, std::string const &file = 
 									break;
 								case 4:
 									{
-										std::string def_files = sub.substr(16);
+										std::string def_files = sub.substr(15);
 										removeDuplWhitespace(def_files);
 										std::string const methods[3] = {"GET", "POST", "DELETE"};
 										char *copy = strdup(def_files.c_str());
@@ -408,13 +408,16 @@ std::vector<conf_data*> *readConfFile(t_gconf *gconf, std::string const &file = 
 										for (size_t i = 0; token; ++i){
 											for (j = 0; j < 3; j++)
 												if (token == methods[j])
-										break;
-										token = strtok(NULL, " ");
+													break;
+											if (j == 3){
+												free(tabs);
+												throw std::invalid_argument("Invalid HTTP method");
+											}
+											token = strtok(NULL, " ");
 										}
 										free(tabs);
-										if (j == 3)
-											throw std::invalid_argument("Invalid HTTP method");
 										(*it)->methods_per_location.insert(std::make_pair(Fname, def_files));
+										// conf_data *a = *it;
 									}
 									break;
 								default:
