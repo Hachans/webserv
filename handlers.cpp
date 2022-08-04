@@ -53,6 +53,7 @@ void Server::process_get_request()
 			std::fstream fs("cgi_out_file");
 			ss << fs.rdbuf();
 			_cgi_response = _http_request["Version"] + " 200 " + _http_table["200"];
+			_cgi_response += "Connection: Closed\r\n";
 			_cgi_response += ss.str();
 		}
 		else
